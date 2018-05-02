@@ -8,7 +8,7 @@ NE = 1000;
 NI = NE / 5;
 
 
-Nloop = 1;
+Nloop = 100;
 
 
 invariant = 'area';
@@ -244,191 +244,13 @@ iv1 = 1; iv2 = 2;
 
         RE_covtot1{m} = RE0_cov(:,:,1);
         RE_covtot2{m} = RE0_cov(:,:,2);
-       
+        
+        ExternalE_Input{m} = IE_FF;
+        RecurrentEE_Input{m} = JEE * RE0_ang{m};
+        RecurrentEI_Input{m} = JEI * RI0_ang{m};
+    
+        ExternalI_Input{m} = II_FF;
+        RecurrentIE_Input{m} = JIE * RE0_ang{m};
+        RecurrentII_Input{m} = JII * RI0_ang{m};
     
 end
-
-Xr = rgb2hsv([1,0,0]);
-Xb = rgb2hsv([0,0,1]);
-Xr(2) = 0.6;
-Xb(2) = 0.6;
-Xr = hsv2rgb(Xr);
-Xb = hsv2rgb(Xb);
-
-Xr2 = rgb2hsv([1,0,0]);
-Xb2 = rgb2hsv([0,0,1]);
-Xr2(2) = 0.2;
-Xb2(2) = 0.2;
-Xr2 = hsv2rgb(Xr2);
-Xb2 = hsv2rgb(Xb2);
-
-
-
-figure
-subplot(2,3,1)
-hold on
-set(gca, 'fontsize', 24)
-ylabel('Mean Response')
-title('Pyramidal Cells')
-plot(theta_pE * 180/pi, RE0_vert{1}, 'color', Xr, 'linewidth', 4, 'linestyle', '--')
-plot(theta_pE * 180/pi, RE0_vert{2}, 'color',Xr2, 'linewidth', 4)
-plot(theta_pE * 180/pi, RE0_vert{3}, 'color', 'r', 'linewidth', 4)
-plot(theta_pE * 180/pi, RE0_ang{1}, 'color', Xb, 'linewidth', 4, 'linestyle', '--')
-plot(theta_pE * 180/pi, RE0_ang{2}, 'color', Xb2, 'linewidth', 4)
-plot(theta_pE * 180/pi, RE0_ang{3}, 'color', 'b', 'linewidth', 4)
-set(gca, 'xtick', 0:90:360)
-set(gca, 'xticklabel', {})
-box on
-subplot(2,3,4)
-hold on
-set(gca, 'fontsize', 24)
-ylabel('Mean Response')
-title('Interneurons')
-plot(theta_pI * 180/pi, RI0_vert{1}, 'color', Xr, 'linewidth', 4, 'linestyle', '--')
-plot(theta_pI * 180/pi, RI0_vert{2}, 'color',Xr2, 'linewidth', 4)
-plot(theta_pI * 180/pi, RI0_vert{3}, 'color', 'r', 'linewidth', 4)
-plot(theta_pI * 180/pi, RI0_ang{1}, 'color', Xb, 'linewidth', 4, 'linestyle', '--')
-plot(theta_pI * 180/pi, RI0_ang{2}, 'color', Xb2, 'linewidth', 4)
-plot(theta_pI * 180/pi, RI0_ang{3}, 'color', 'b', 'linewidth', 4)
-legend('Non-Specific Inhibition', 'Iso-Orientation Inhibition', 'Cross-Orientation Inhibition', '', '', '')
-set(gca, 'xtick', 0:90:360)
-%set(gca, 'xticklabel', {})
-box on
-subplot(2,3,2)
-hold on
-set(gca, 'fontsize', 24)
-ylabel('Standard Deviation of Response')
-title('Pyramidal Cells')
-plot(theta_pE * 180/pi, RE0_std_vert{1}, 'color', Xr, 'linewidth', 4, 'linestyle', '--')
-plot(theta_pE * 180/pi, RE0_std_vert{2}, 'color',Xr2, 'linewidth', 4)
-plot(theta_pE * 180/pi, RE0_std_vert{3}, 'color', 'r', 'linewidth', 4)
-plot(theta_pE * 180/pi, RE0_std_ang{1}, 'color', Xb, 'linewidth', 4, 'linestyle', '--')
-plot(theta_pE * 180/pi, RE0_std_ang{2}, 'color', Xb2, 'linewidth', 4)
-plot(theta_pE * 180/pi, RE0_std_ang{3}, 'color', 'b', 'linewidth', 4)
-set(gca, 'xtick', 0:90:360)
-set(gca, 'xticklabel', {})
-box on
-subplot(2,3,5)
-hold on
-set(gca, 'fontsize', 24)
-ylabel('Standard Deviation of Response')
-title('Interneurons')
-plot(theta_pI * 180/pi, RI0_std_vert{1}, 'color', Xr, 'linewidth', 4, 'linestyle', '--')
-plot(theta_pI * 180/pi,  RI0_std_vert{2}, 'color',Xr2, 'linewidth', 4)
-plot(theta_pI * 180/pi, RI0_std_vert{3}, 'color', 'r', 'linewidth', 4)
-plot(theta_pI * 180/pi, RI0_std_ang{1}, 'color', Xb, 'linewidth', 4, 'linestyle', '--')
-plot(theta_pI * 180/pi, RI0_std_ang{2}, 'color', Xb2, 'linewidth', 4)
-plot(theta_pI * 180/pi, RI0_std_ang{3}, 'color', 'b', 'linewidth', 4)
-set(gca, 'xtick', 0:90:360)
-%set(gca, 'xticklabel', {})
-box on
-subplot(2,3,3)
-hold on
-set(gca, 'fontsize', 24)
-ylabel('Response Selectivity')
-title('Pyramidal Cells')
-plot(theta_pE * 180/pi, abs(SI0E{1}), 'color', [0.4, 0.4, 0.4], 'linewidth', 4, 'linestyle', '--')
-plot(theta_pE * 180/pi, abs(SI0E{2}), 'color', [0.8, 0.8, 0.8], 'linewidth', 4)
-plot(theta_pE * 180/pi, abs(SI0E{3}), 'k', 'linewidth', 4)
-set(gca, 'xtick', 0:90:360)
-set(gca, 'xticklabel', {})
-box on
-subplot(2,3,6)
-hold on
-set(gca, 'fontsize', 24)
-ylabel('Response Selectivity')
-title('Interneurons')
-plot(theta_pI * 180/pi, abs(SI0I{1}), 'k', 'color', [0.4,0.4,0.4], 'linewidth', 4, 'linestyle', '--')
-plot(theta_pI * 180/pi, abs(SI0I{2}), 'k', 'linewidth', 4, 'color', [0.8,0.8,0.8])
-plot(theta_pI * 180/pi, abs(SI0I{3}), 'k', 'linewidth', 4)
-set(gca, 'xtick', 0:90:360)
-set(gca, 'xticklabel', {})
-legend('', '', '')
-box on
-% 
-
-
-figure
-subplot(3,3,1)
-hold on
-set(gca, 'fontsize', 24)
-ylabel('Mean Response')
-title('Pyramidal Cells')
-plot(theta_pE * 180/pi, RE0_vert{1}, 'color', Xr, 'linewidth', 4, 'linestyle', '--')
-plot(theta_pE * 180/pi, RE0_vert{2}, 'color',Xr2, 'linewidth', 4)
-plot(theta_pE * 180/pi, RE0_vert{3}, 'color', 'r', 'linewidth', 4)
-plot(theta_pE * 180/pi, RE0_ang{1}, 'color', Xb, 'linewidth', 4, 'linestyle', '--')
-plot(theta_pE * 180/pi, RE0_ang{2}, 'color', Xb2, 'linewidth', 4)
-plot(theta_pE * 180/pi, RE0_ang{3}, 'color', 'b', 'linewidth', 4)
-set(gca, 'xtick', 0:90:360)
-set(gca, 'xticklabel', {})
-box on
-subplot(3,3,4)
-hold on
-set(gca, 'fontsize', 24)
-ylabel('Mean Response')
-title('Interneurons')
-plot(theta_pI * 180/pi, RI0_vert{1}, 'color', Xr, 'linewidth', 4, 'linestyle', '--')
-plot(theta_pI * 180/pi, RI0_vert{2}, 'color',Xr2, 'linewidth', 4)
-plot(theta_pI * 180/pi, RI0_vert{3}, 'color', 'r', 'linewidth', 4)
-plot(theta_pI * 180/pi, RI0_ang{1}, 'color', Xb, 'linewidth', 4, 'linestyle', '--')
-plot(theta_pI * 180/pi, RI0_ang{2}, 'color', Xb2, 'linewidth', 4)
-plot(theta_pI * 180/pi, RI0_ang{3}, 'color', 'b', 'linewidth', 4)
-legend('Non-Specific Inhibition', 'Iso-Orientation Inhibition', 'Cross-Orientation Inhibition', '', '', '')
-set(gca, 'xtick', 0:90:360)
-%set(gca, 'xticklabel', {})
-box on
-subplot(3,3,2)
-hold on
-set(gca, 'fontsize', 24)
-ylabel('Response std')
-title('Pyramidal Cells')
-plot(theta_pE * 180/pi, RE0_std_vert{1}, 'color', Xr, 'linewidth', 4, 'linestyle', '--')
-plot(theta_pE * 180/pi, RE0_std_vert{2}, 'color',Xr2, 'linewidth', 4)
-plot(theta_pE * 180/pi, RE0_std_vert{3}, 'color', 'r', 'linewidth', 4)
-plot(theta_pE * 180/pi, RE0_std_ang{1}, 'color', Xb, 'linewidth', 4, 'linestyle', '--')
-plot(theta_pE * 180/pi, RE0_std_ang{2}, 'color', Xb2, 'linewidth', 4)
-plot(theta_pE * 180/pi, RE0_std_ang{3}, 'color', 'b', 'linewidth', 4)
-set(gca, 'xtick', 0:90:360)
-set(gca, 'xticklabel', {})
-box on
-subplot(3,3,5)
-hold on
-set(gca, 'fontsize', 24)
-ylabel('Response std')
-title('Interneurons')
-plot(theta_pI * 180/pi, RI0_std_vert{1}, 'color', Xr, 'linewidth', 4, 'linestyle', '--')
-plot(theta_pI * 180/pi, RI0_std_vert{2}, 'color',Xr2, 'linewidth', 4)
-plot(theta_pI * 180/pi, RI0_std_vert{3}, 'color', 'r', 'linewidth', 4)
-plot(theta_pI * 180/pi, RI0_std_ang{1}, 'color', Xb, 'linewidth', 4, 'linestyle', '--')
-plot(theta_pI * 180/pi, RI0_std_ang{2}, 'color', Xb2, 'linewidth', 4)
-plot(theta_pI * 180/pi, RI0_std_ang{3}, 'color', 'b', 'linewidth', 4)
-set(gca, 'xtick', 0:90:360)
-%set(gca, 'xticklabel', {})
-box on
-subplot(3,3,3)
-hold on
-set(gca, 'fontsize', 24)
-ylabel('Response Selectivity')
-title('Pyramidal Cells')
-plot(theta_pE * 180/pi, abs(SI0E{1}), 'color', [0.4, 0.4, 0.4], 'linewidth', 4, 'linestyle', '--')
-plot(theta_pE * 180/pi, abs(SI0E{2}), 'color', [0.8, 0.8, 0.8], 'linewidth', 4)
-plot(theta_pE * 180/pi, abs(SI0E{3}), 'k', 'linewidth', 4)
-set(gca, 'xtick', 0:90:360)
-set(gca, 'xticklabel', {})
-box on
-subplot(3,3,6)
-hold on
-set(gca, 'fontsize', 24)
-ylabel('Response Selectivity')
-title('Interneurons')
-plot(theta_pI * 180/pi, abs(SI0I{1}), 'k', 'color', [0.4,0.4,0.4], 'linewidth', 4, 'linestyle', '--')
-plot(theta_pI * 180/pi, abs(SI0I{2}), 'k', 'linewidth', 4, 'color', [0.8,0.8,0.8])
-plot(theta_pI * 180/pi, abs(SI0I{3}), 'k', 'linewidth', 4)
-set(gca, 'xtick', 0:90:360)
-set(gca, 'xticklabel', {})
-legend('', '', '')
-box on
-
-subplot(3,2,7)
-

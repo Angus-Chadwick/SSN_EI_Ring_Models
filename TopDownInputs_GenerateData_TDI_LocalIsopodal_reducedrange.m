@@ -10,6 +10,7 @@ NI = NE / 5;
 
 Nloop = 100;
 
+RE_covtot = cell(Nloop);
 
 invariant = 'area';
 
@@ -19,33 +20,29 @@ tauE = 10;
 tauI = tauE / 2;
 
 Nt = 10000;
+dt = tauE / 100;
 
 gamma = 2;
 
 noise = 1;
-p=1;
 
 
-
-%%
-
-for m=1:3
-    
-stimvals = 2*pi * [160, 200] / 360;
+stimvals = 2*pi * [160,200] / 360;
 Nstim = length(stimvals); 
        
-RE_TD = zeros([NE, N_TD, Nstim]) ;
-RI_TD = zeros([NI, N_TD, Nstim]) ;
-RE0 = RE_TD;
-RI0 = RI_TD;
-
-RE_TD_std = RE_TD;
-RI_TD_std = RI_TD;
-RE0_std = RE0;
-RI0_std = RI0;
 
 
-    for q=1:Nstim
+RE = cell([Nloop, 1]);
+RI = RE;
+
+RE_std = RE;
+RI_std = RI;
+RE_cov = RE;
+Rtot_cov = RE;
+
+for p = 1:2:101
+
+for q=1:Nstim
         
 theta_pE = linspace(0, 2*pi, NE+1);
 theta_pE = theta_pE(1:(end-1)); % for circular invariance
@@ -56,7 +53,7 @@ theta_pI = theta_pI(1:(end-1));
 [~, id2]  = min(abs(stimvals(2) - theta_pI));
 stimvals = [theta_pI(id1), theta_pI(id2)];
 
-theta_a = (stimvals(1) + stimvals(2))/2 + pi;
+theta_a = (stimvals(1) + stimvals(2))/2;
 
 theta_s = stimvals(q);
 
@@ -67,29 +64,13 @@ JIE = zeros([NI, NE]);
 JEI = zeros([NE, NI]);
 JII = zeros(NI);
 
-if m==1 % no tuning
-
 kEE = 1.0;
-kIE = kEE *  0; 
-kEI = kEE *  0;
+kIE = 0.5; % 20, 101
+kEI = -0.5;
 kII = +kEE * 0.0 ;
 
-elseif m==2 % iso-orientation inhibition
 
-kEE = 1.0;
-kIE = kEE *  0.3; 
-kEI = kEE *  0.3;
-kII = +kEE * 0.0 ;
 
-elseif m == 3 % cross-orientation inhibition
-
-kEE = 1.0;
-kIE = kEE *  0.3;
-kEI = -kEE *  0.3;
-kII = +kEE * 0.0 ;
-
-end
-    
 JEE_max = 15/NE;
 
 for i=1:NE
@@ -104,10 +85,19 @@ JIE_mean = mean(JEE(:)) * 2 * 1.1 ;
 JII_mean = mean(JEE(:)) * 1 * 1.1;
 
 
+if strmatch(invariant, 'area')
+
 JEI_max = JEI_mean / besseli(0, abs(kEI));  % fixed area
 JIE_max = JIE_mean / besseli(0, abs(kIE));
 JII_max = JII_mean / besseli(0, abs(kII));
 
+elseif strmatch(invariant, 'maxval')
+
+JEI_max = JEI_mean /  besseli(0, 0)  * (exp(0.5) / exp(abs(kEI)));   % fixed maximum
+JIE_max = JIE_mean / besseli(0, 0)  * (exp(0.5) / exp(abs(kIE)));  
+JII_max = JII_mean / besseli(0, 0)  * (exp(0.5) / exp(abs(kII)));
+
+end
 
 
 for i=1:NE
@@ -132,11 +122,11 @@ IE_FF = (IE_FF_area / (2*pi* besseli(0,kE_FF))) * exp(kE_FF * cos(theta_pE - the
 
 II_FF = -0 * ones([NI,1]); %% seems to implement subtractive normalisation
 
-IE_TD_area = IE_FF_area / 10 * 0.5 * p;
+IE_TD_area = IE_FF_area / 10 * 0.5 * (p-1);
 kE_TD = 0.05 * 20 * kEE * 0;
 
-II_TD_area = IE_FF_area / 10 * 0.5 * p;
-kI_TD = kE_TD * 0.5 * 0;
+II_TD_area = IE_FF_area / 100 * (p-100);
+kI_TD = 0.5;
 
 TD = 'Inh';
 
@@ -151,31 +141,40 @@ elseif strmatch(TD, 'Inh')
     II_TD = II_TD_area / (2*pi* besseli(0,kE_TD)) * exp(kI_TD * cos(theta_pI - theta_a))';
 
 end
- 
+    
+
 %% simulate
 
-NoiseModel = 'Add';
 
+NoiseModel = 'Add';
 
 parfor n=1:Nloop
 
     [rE, rI]       = SimulateNetwork(IE_FF, 0*IE_TD, II_FF, 0*II_TD, JEE, JEI, JIE, JII, noise, gamma, tauE, tauI, Nt, NoiseModel);
+    [rE_TD, rI_TD]       = SimulateNetwork(IE_FF, IE_TD, II_FF, II_TD, JEE, JEI, JIE, JII, noise, gamma, tauE, tauI, Nt, NoiseModel);
 
     
     RE{n}(:,q) = mean(rE(:,300:end),2);
     RI{n}(:,q) = mean(rI(:,300:end),2);
+
+    RE_TD{n}(:,q) = mean(rE_TD(:,300:end),2);
+    RI_TD{n}(:,q) = mean(rI_TD(:,300:end),2);
     
     RE_std{n}(:,q) = std(rE(:,300:end),[],2);
     RI_std{n}(:,q) = std(rI(:,300:end),[],2);
 
-
-    RE_cov{n}(:,:,q) = cov([rE(:,300:end); rI(:,300:end)]')
-
+    RE_std_TD{n}(:,q) = std(rE_TD(:,300:end),[],2);
+    RI_std_TD{n}(:,q) = std(rI_TD(:,300:end),[],2);
+    
+    RE_cov{n}(:,:,q) = cov(rE(:,300:end)');
+    Rtot_cov{n}(:,:,q) = cov([rE(:,300:end); rI(:,300:end)]')
+    
+    RE_cov_TD{n}(:,:,q) = cov(rE_TD(:,300:end)');
+    Rtot_cov_TD{n}(:,:,q) = cov([rE_TD(:,300:end); rI(:,300:end)]')
+    
 end
 
-    
-
-
+end
 
 RE0 = mean(cat(3,RE{:}),3);
 RI0 = mean(cat(3,RI{:}),3);
@@ -184,64 +183,29 @@ RE0_std = mean(cat(3,RE_std{:}),3);
 RI0_std = mean(cat(3,RI_std{:}),3);
 
 RE0_cov = mean(cat(4,RE_cov{:}),4);
+Rtot0_cov = mean(cat(4,Rtot_cov{:}),4);
 
+RE0_TD = mean(cat(3,RE_TD{:}),3);
+RI0_TD = mean(cat(3,RI_TD{:}),3);
+
+RE0_std_TD = mean(cat(3,RE_std_TD{:}),3);
+RI0_std_TD = mean(cat(3,RI_std_TD{:}),3);
+
+RE0_cov_TD = mean(cat(4,RE_cov_TD{:}),4);
+Rtot0_cov_TD = mean(cat(4,Rtot_cov_TD{:}),4);
+
+
+
+
+RE_covtot1{p} = RE0_cov(:,:,1);
+RE_covtot2{p} = RE0_cov(:,:,2);
+SItot_E(p) = squeeze(RE0(:,1) - RE0(:,2))' * inv(0.5 * (RE_covtot1{p} + RE_covtot2{p})) * squeeze(RE0(:,1) - RE0(:,2)); 
+SItot_E_ind(p) =  squeeze(RE0(:,1) - RE0(:,2))' * inv(0.5 * diag(diag(RE_covtot1{p} + RE_covtot2{p}))) * squeeze(RE0(:,1) - RE0(:,2)); 
+
+
+RE_covtot1_TD{p} = RE0_cov_TD(:,:,1);
+RE_covtot2_TD{p} = RE0_cov_TD(:,:,2);
+SItot_E_TD(p) = squeeze(RE0_TD(:,1) - RE0_TD(:,2))' * inv(0.5 * (RE_covtot1_TD{p} + RE_covtot2_TD{p})) * squeeze(RE0_TD(:,1) - RE0_TD(:,2)); 
+SItot_E_ind_TD(p) =  squeeze(RE0_TD(:,1) - RE0_TD(:,2))' * inv(0.5 * diag(diag(RE_covtot1_TD{p} + RE_covtot2_TD{p}))) * squeeze(RE0_TD(:,1) - RE0_TD(:,2)); 
 
 end
-
-
-
-
-
-mmE = zeros(Nstim);
-mmI = zeros(Nstim);
-m0E = zeros(Nstim);
-m0I = zeros(Nstim);
-
-iv1 = 1; iv2 = 2;
-
-        RE0_std_vert{m} = squeeze(RE0_std(:,iv1));
-        RE0_std_ang{m} = squeeze(RE0_std(:,iv2));
-
-        RE0_vert{m} = squeeze(RE0(:,iv1));
-        RE0_ang{m} = squeeze(RE0(:,iv2));
-     
-        RI0_std_vert{m} = squeeze(RI0_std(:,iv1));
-        RI0_std_ang{m} = squeeze(RI0_std(:,iv2));
-
-        RI0_vert{m} = squeeze(RI0(:,iv1));
-        RI0_ang{m} = squeeze(RI0(:,iv2));
-
-        % E selectivity
-        
-        dmu_0E{m} = RE0_ang{m} - RE0_vert{m};
-        
-        poolvar_0E{m} = (0.5* (RE0_std_ang{m}.^2 + RE0_std_vert{m}.^2));
-
-        SI0E{m} = dmu_0E{m} ./ sqrt(poolvar_0E{m});
-        
-        % I selectivity
-        
-        dmu_0I{m} = RI0_ang{m} - RI0_vert{m};
-        
-        poolvar_0I{m} = (0.5 * (RI0_std_ang{m}.^2 + RI0_std_vert{m}.^2));
-
-        SI0I{m} = dmu_0I{m} ./ sqrt(poolvar_0I{m});
-
-        RE_covtot1{m} = RE0_cov(:,:,1);
-        RE_covtot2{m} = RE0_cov(:,:,2);
-       
-        
-        
-        ExternalE_Input{m} = IE_FF;
-        RecurrentEE_Input{m} = JEE * RE0_ang{m};
-        RecurrentEI_Input{m} = JEI * RI0_ang{m};
-    
-        ExternalI_Input{m} = II_FF;
-        RecurrentIE_Input{m} = JIE * RE0_ang{m};
-        RecurrentII_Input{m} = JII * RI0_ang{m};
-        
-end
-
-
-
-

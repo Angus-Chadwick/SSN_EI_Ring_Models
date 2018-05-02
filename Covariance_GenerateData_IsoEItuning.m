@@ -8,7 +8,7 @@ NE = 1000;
 NI = NE / 5;
 
 
-Nloop = 1;
+Nloop = 500;
 
 RE_covtot = cell(Nloop);
 
@@ -20,7 +20,6 @@ tauE = 10;
 tauI = tauE / 2;
 
 Nt = 10000;
-dt = tauE / 100;
 
 gamma = 2;
 
@@ -79,8 +78,8 @@ for i=1:NE
 end
 
 
-JEI_mean = 0.02 ;   % SIpop = 5.21, SIind = 7.04, squared-norm of delta mu = 0.00024, trace(D) =0.0045
-JIE_mean = 0.02; 
+JEI_mean = 0.04 ;   % SIpop = 5.21, SIind = 7.04, squared-norm of delta mu = 0.00024, trace(D) =0.0045
+JIE_mean = 0.04; 
 JII_mean = mean(JEE(:)) * 1 * 1.1;
 
 

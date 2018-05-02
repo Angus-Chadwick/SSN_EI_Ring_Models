@@ -8,7 +8,7 @@ NE = 1000;
 NI = NE / 5;
 
 
-Nloop = 25;
+Nloop = 500;
 
 RE_covtot = cell(Nloop);
 
@@ -64,8 +64,8 @@ JEI = zeros([NE, NI]);
 JII = zeros(NI);
 
 kEE = 1.0;
-kIE = 0.3; % 20, 101
-kEI = 0.3;
+kIE = 0.5; % 20, 101
+kEI = 0.5;
 kII = +kEE * 0.0 ;
 
 
@@ -79,8 +79,8 @@ for i=1:NE
 end
 
 
-JEI_mean = 0.035 ;   
-JIE_mean = 0.035; 
+JEI_mean = 0.0257;   
+JIE_mean = 0.0257; % 0.25 gives 21.96, want to match cross which is 24.26 (0.255 is pretty good, but perhaps slightly too much amplitude mode)
 JII_mean = mean(JEE(:)) * 1 * 1.1;
 
 
@@ -151,6 +151,7 @@ parfor n=1:Nloop
 
     RE_cov{n}(:,:,q) = cov(rE(:,300:end)');
     Rtot_cov{n}(:,:,q) = cov([rE(:,300:end); rI(:,300:end)]')
+    
     
 end
 

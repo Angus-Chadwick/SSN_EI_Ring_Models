@@ -25,6 +25,11 @@ h = colorbar;
 set(h, 'fontsize', 18)
 title(h, 'log SI')
 
+hold on
+plot(0.04,0.04, 'linewidth',3, 'linestyle','none', 'marker', '+', 'markersize', 25, 'color', [0.4,0.4,0.4])
+plot(0.04,0.04, 'linewidth',3, 'linestyle','none', 'marker', '*', 'markersize', 25, 'color', [0.4,0.4,0.4])
+plot(0.04,0.04, 'linewidth',3, 'linestyle','none', 'marker', 'x', 'markersize', 25, 'color', [0.4,0.4,0.4])
+
 subplot(2,3,4)
 
 h = imagesc(JIE_mean,JEI_mean, log(sqrt(SI_I')))
@@ -39,6 +44,10 @@ h = colorbar;
 set(h, 'fontsize', 18)
 title(h, 'log SI')
 
+hold on
+plot(0.04,0.04, 'linewidth',3, 'linestyle','none', 'marker', '+', 'markersize', 25, 'color', [0.4,0.4,0.4])
+plot(0.04,0.04, 'linewidth',3, 'linestyle','none', 'marker', '*', 'markersize', 25, 'color', [0.4,0.4,0.4])
+plot(0.04,0.04, 'linewidth',3, 'linestyle','none', 'marker', 'x', 'markersize', 25, 'color', [0.4,0.4,0.4])
 
 load([ROOT, Y])
 
@@ -57,6 +66,12 @@ h = colorbar;
 set(h, 'fontsize', 18)
 title(h, 'log SI')
 
+
+hold on
+plot(0.04,0.04, 'linewidth',3, 'linestyle','none', 'marker', '+', 'markersize', 25, 'color', [0.4,0.4,0.4])
+plot(0.04,0.04, 'linewidth',3, 'linestyle','none', 'marker', '*', 'markersize', 25, 'color', [0.4,0.4,0.4])
+plot(0.04,0.04, 'linewidth',3, 'linestyle','none', 'marker', 'x', 'markersize', 25, 'color', [0.4,0.4,0.4])
+
 subplot(2,3,5)
 
 h = imagesc(JIE_mean,JEI_mean, log(sqrt(SI_I')))
@@ -71,6 +86,10 @@ h = colorbar;
 set(h, 'fontsize', 18)
 title(h, 'log SI')
 
+hold on
+plot(0.04,0.04, 'linewidth',3, 'linestyle','none', 'marker', '+', 'markersize', 25, 'color', [0.4,0.4,0.4])
+plot(0.04,0.04, 'linewidth',3, 'linestyle','none', 'marker', '*', 'markersize', 25, 'color', [0.4,0.4,0.4])
+plot(0.04,0.04, 'linewidth',3, 'linestyle','none', 'marker', 'x', 'markersize', 25, 'color', [0.4,0.4,0.4])
 
 load([ROOT, Z])
 
@@ -89,6 +108,11 @@ h = colorbar;
 set(h, 'fontsize', 18)
 title(h, 'log SI')
 
+hold on
+plot(0.04,0.04, 'linewidth',3, 'linestyle','none', 'marker', '+', 'markersize', 25, 'color', [0.4,0.4,0.4])
+plot(0.04,0.04, 'linewidth',3, 'linestyle','none', 'marker', '*', 'markersize', 25, 'color', [0.4,0.4,0.4])
+plot(0.04,0.04, 'linewidth',3, 'linestyle','none', 'marker', 'x', 'markersize', 25, 'color', [0.4,0.4,0.4])
+
 subplot(2,3,6)
 
 h = imagesc(JIE_mean,JEI_mean, log(sqrt(SI_I')))
@@ -103,56 +127,9 @@ h = colorbar;
 set(h, 'fontsize', 18)
 title(h, 'log SI')
 
-%% Plot population SI
+hold on
+plot(0.04,0.04, 'linewidth',3, 'linestyle','none', 'marker', '+', 'markersize', 25, 'color', [0.4,0.4,0.4])
+plot(0.04,0.04, 'linewidth',3, 'linestyle','none', 'marker', '*', 'markersize', 25, 'color', [0.4,0.4,0.4])
+plot(0.04,0.04, 'linewidth',3, 'linestyle','none', 'marker', 'x', 'markersize', 25, 'color', [0.4,0.4,0.4])
 
-
-load([ROOT, X])
-
-figure
-
-subplot(1,3,1)
-
-h = imagesc(JEI_mean,JIE_mean, log(sqrt(SItot_E .* (SItot_E > 0))))
-set(h, 'AlphaData', ~isnan(SItot_E))
-set(gca, 'fontsize', 18)
-set(gca, 'ydir', 'normal')
-xlabel('E to I coupling strength (J_{IE})')
-ylabel('I to E coupling strength (J_{EI})')
-title('Selectivity (Pyramidal Population)')
-h = colorbar;
-set(h, 'fontsize', 18)
-title(h, 'log SI')
-
-load([ROOT, Y])
-
-
-
-subplot(1,3,2)
-
-h = imagesc(JEI_mean,JIE_mean, log(sqrt(SItot_E .* (SItot_E > 0))))
-set(h, 'AlphaData', ~isnan(SItot_E))
-set(gca, 'fontsize', 18)
-set(gca, 'ydir', 'normal')
-xlabel('E to I coupling strength (J_{IE})')
-ylabel('I to E coupling strength (J_{EI})')
-title('Selectivity (Pyramidal Population)')
-h = colorbar;
-set(h, 'fontsize', 18)
-title(h, 'log SI')
-
-load([ROOT, Z])
-
-
-
-subplot(1,3,3)
-
-h = imagesc(JEI_mean,JIE_mean, log(sqrt(SItot_E .* (SItot_E > 0))))
-set(h, 'AlphaData', ~isnan(SItot_E))
-set(gca, 'fontsize', 18)
-set(gca, 'ydir', 'normal')
-xlabel('E to I coupling strength (J_{IE})')
-ylabel('I to E coupling strength (J_{EI})')
-title('Selectivity (Pyramidal Population)')
-h = colorbar;
-set(h, 'fontsize', 18)
-title(h, 'log SI')
+colormap copper

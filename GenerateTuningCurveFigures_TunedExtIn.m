@@ -8,7 +8,7 @@ NE = 1000;
 NI = NE / 5;
 
 
-Nloop = 100;
+Nloop = 1;
 
 
 invariant = 'area';
@@ -127,7 +127,7 @@ end
 %% Stimulus drive
 
 IE_FF_area = 0.005 * 100;  %% seems to implement a gain function
-kE_FF = 0.1*kEE;
+kE_FF = 1 *kEE;
 IE_FF = (IE_FF_area / (2*pi* besseli(0,kE_FF))) * exp(kE_FF * cos(theta_pE - theta_s))';  
 
 II_FF = -0 * ones([NI,1]); %% seems to implement subtractive normalisation
@@ -154,7 +154,7 @@ end
  
 %% simulate
 
-NoiseModel = 'Add';
+NoiseModel = 'Add'; 
 
 
 parfor n=1:Nloop

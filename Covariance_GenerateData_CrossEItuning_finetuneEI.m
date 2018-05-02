@@ -8,8 +8,9 @@ NE = 1000;
 NI = NE / 5;
 
 
-Nloop = 100;
+Nloop = 10;
 
+RE_covtot = cell(Nloop);
 
 invariant = 'area';
 
@@ -19,33 +20,28 @@ tauE = 10;
 tauI = tauE / 2;
 
 Nt = 10000;
+dt = tauE / 100;
 
 gamma = 2;
 
 noise = 1;
-p=1;
 
-
-
-%%
-
-for m=1:3
-    
-stimvals = 2*pi * [160, 200] / 360;
+stimvals = 2*pi * [160,200] / 360;
 Nstim = length(stimvals); 
        
-RE_TD = zeros([NE, N_TD, Nstim]) ;
-RI_TD = zeros([NI, N_TD, Nstim]) ;
-RE0 = RE_TD;
-RI0 = RI_TD;
-
-RE_TD_std = RE_TD;
-RI_TD_std = RI_TD;
-RE0_std = RE0;
-RI0_std = RI0;
 
 
-    for q=1:Nstim
+RE = cell([Nloop, 1]);
+RI = RE;
+
+RE_std = RE;
+RI_std = RI;
+RE_cov = RE;
+Rtot_cov = RE;
+
+p=1;
+
+for q=1:Nstim
         
 theta_pE = linspace(0, 2*pi, NE+1);
 theta_pE = theta_pE(1:(end-1)); % for circular invariance
@@ -67,29 +63,13 @@ JIE = zeros([NI, NE]);
 JEI = zeros([NE, NI]);
 JII = zeros(NI);
 
-if m==1 % no tuning
-
 kEE = 1.0;
-kIE = kEE *  0; 
-kEI = kEE *  0;
+kIE = 0.3; % 20, 101
+kEI = -0.3;
 kII = +kEE * 0.0 ;
 
-elseif m==2 % iso-orientation inhibition
 
-kEE = 1.0;
-kIE = kEE *  0.3; 
-kEI = kEE *  0.3;
-kII = +kEE * 0.0 ;
 
-elseif m == 3 % cross-orientation inhibition
-
-kEE = 1.0;
-kIE = kEE *  0.3;
-kEI = -kEE *  0.3;
-kII = +kEE * 0.0 ;
-
-end
-    
 JEE_max = 15/NE;
 
 for i=1:NE
@@ -99,14 +79,15 @@ for i=1:NE
 end
 
 
-JEI_mean = mean(JEE(:)) * 2 * 1.1 ;  
-JIE_mean = mean(JEE(:)) * 2 * 1.1 ;
+JEI_mean = 0.0355;   
+JIE_mean = 0.0355; 
 JII_mean = mean(JEE(:)) * 1 * 1.1;
 
 
 JEI_max = JEI_mean / besseli(0, abs(kEI));  % fixed area
 JIE_max = JIE_mean / besseli(0, abs(kIE));
 JII_max = JII_mean / besseli(0, abs(kII));
+
 
 
 
@@ -151,11 +132,12 @@ elseif strmatch(TD, 'Inh')
     II_TD = II_TD_area / (2*pi* besseli(0,kE_TD)) * exp(kI_TD * cos(theta_pI - theta_a))';
 
 end
- 
+    
+
 %% simulate
 
-NoiseModel = 'Add';
 
+NoiseModel = 'Add';
 
 parfor n=1:Nloop
 
@@ -164,18 +146,16 @@ parfor n=1:Nloop
     
     RE{n}(:,q) = mean(rE(:,300:end),2);
     RI{n}(:,q) = mean(rI(:,300:end),2);
-    
+
     RE_std{n}(:,q) = std(rE(:,300:end),[],2);
     RI_std{n}(:,q) = std(rI(:,300:end),[],2);
 
-
-    RE_cov{n}(:,:,q) = cov([rE(:,300:end); rI(:,300:end)]')
-
+    RE_cov{n}(:,:,q) = cov(rE(:,300:end)');
+    Rtot_cov{n}(:,:,q) = cov([rE(:,300:end); rI(:,300:end)]')
+    
 end
 
-    
-
-
+end
 
 RE0 = mean(cat(3,RE{:}),3);
 RI0 = mean(cat(3,RI{:}),3);
@@ -184,9 +164,8 @@ RE0_std = mean(cat(3,RE_std{:}),3);
 RI0_std = mean(cat(3,RI_std{:}),3);
 
 RE0_cov = mean(cat(4,RE_cov{:}),4);
+Rtot0_cov = mean(cat(4,Rtot_cov{:}),4);
 
-
-end
 
 
 
@@ -197,51 +176,53 @@ mmI = zeros(Nstim);
 m0E = zeros(Nstim);
 m0I = zeros(Nstim);
 
-iv1 = 1; iv2 = 2;
+for iv1 = 1:Nstim
+    for iv2 = 1:Nstim
 
-        RE0_std_vert{m} = squeeze(RE0_std(:,iv1));
-        RE0_std_ang{m} = squeeze(RE0_std(:,iv2));
+        RE0_std_vert = squeeze(RE0_std(:,iv1));
+        RE0_std_ang = squeeze(RE0_std(:,iv2));
 
-        RE0_vert{m} = squeeze(RE0(:,iv1));
-        RE0_ang{m} = squeeze(RE0(:,iv2));
+        RE0_vert = squeeze(RE0(:,iv1));
+        RE0_ang = squeeze(RE0(:,iv2));
      
-        RI0_std_vert{m} = squeeze(RI0_std(:,iv1));
-        RI0_std_ang{m} = squeeze(RI0_std(:,iv2));
+        RI0_std_vert = squeeze(RI0_std(:,iv1));
+        RI0_std_ang = squeeze(RI0_std(:,iv2));
 
-        RI0_vert{m} = squeeze(RI0(:,iv1));
-        RI0_ang{m} = squeeze(RI0(:,iv2));
+        RI0_vert = squeeze(RI0(:,iv1));
+        RI0_ang  = squeeze(RI0(:,iv2));
 
         % E selectivity
         
-        dmu_0E{m} = RE0_ang{m} - RE0_vert{m};
+        dmu_0E = RE0_ang - RE0_vert;
         
-        poolvar_0E{m} = (0.5* (RE0_std_ang{m}.^2 + RE0_std_vert{m}.^2));
+        poolvar_0E = (0.5* (RE0_std_ang.^2 + RE0_std_vert.^2));
 
-        SI0E{m} = dmu_0E{m} ./ sqrt(poolvar_0E{m});
-        
+        SI0E = dmu_0E.^2 ./ poolvar_0E;
+
+        m0E(iv1,iv2) = nansum(SI0E);
+
         % I selectivity
         
-        dmu_0I{m} = RI0_ang{m} - RI0_vert{m};
+        dmu_0I = RI0_ang - RI0_vert;
         
-        poolvar_0I{m} = (0.5 * (RI0_std_ang{m}.^2 + RI0_std_vert{m}.^2));
+        poolvar_0I = (0.5* (RI0_std_ang.^2 + RI0_std_vert.^2));
 
-        SI0I{m} = dmu_0I{m} ./ sqrt(poolvar_0I{m});
+        SI0I = dmu_0I.^2 ./ poolvar_0I;
 
-        RE_covtot1{m} = RE0_cov(:,:,1);
-        RE_covtot2{m} = RE0_cov(:,:,2);
-       
+        m0I(iv1,iv2) = nansum(SI0I);
         
-        
-        ExternalE_Input{m} = IE_FF;
-        RecurrentEE_Input{m} = JEE * RE0_ang{m};
-        RecurrentEI_Input{m} = JEI * RI0_ang{m};
-    
-        ExternalI_Input{m} = II_FF;
-        RecurrentIE_Input{m} = JIE * RE0_ang{m};
-        RecurrentII_Input{m} = JII * RI0_ang{m};
-        
+
+    end
 end
 
+RE_covtot1 = RE0_cov(:,:,1);
+RE_covtot2 = RE0_cov(:,:,2);
+SItot_E = squeeze(RE0(:,1) - RE0(:,2))' * inv(0.5 * (RE_covtot1 + RE_covtot2)) * squeeze(RE0(:,1) - RE0(:,2)); 
+SItot_E_ind =  squeeze(RE0(:,1) - RE0(:,2))' * inv(0.5 * diag(diag(RE_covtot1 + RE_covtot2))) * squeeze(RE0(:,1) - RE0(:,2)); 
+SI_I = m0I(1,2);
+SI_E = m0E(1,2);
 
+[V,D] = eig(0.5 * (RE_covtot1 + RE_covtot2 ));
+%plot((squeeze(RE0(:,1) - RE0(:,2))' * V * inv(D)).^2)
 
-
+%AnalyticLinearisedCovariance
