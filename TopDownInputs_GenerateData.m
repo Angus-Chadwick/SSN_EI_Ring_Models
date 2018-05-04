@@ -2,13 +2,10 @@
 
 clear all
 
-N_TD = 1;
-
 NE = 1000;
 NI = NE / 5;
 
-
-Nloop = 1;
+Nloop = 10;
 
 RE_covtot = cell(Nloop);
 
@@ -20,7 +17,6 @@ tauE = 10;
 tauI = tauE / 2;
 
 Nt = 10000;
-dt = tauE / 100;
 
 gamma = 2;
 
@@ -40,8 +36,8 @@ RI_std = RI;
 RE_cov = RE;
 Rtot_cov = RE;
 
-for p = 1:11
-
+for p1 = 1:11
+for p2 = 1:11
 for q=1:Nstim
         
 theta_pE = linspace(0, 2*pi, NE+1);
@@ -53,7 +49,8 @@ theta_pI = theta_pI(1:(end-1));
 [~, id2]  = min(abs(stimvals(2) - theta_pI));
 stimvals = [theta_pI(id1), theta_pI(id2)];
 
-theta_a = (stimvals(1) + stimvals(2))/2 + pi;
+theta_aE = (stimvals(1) + stimvals(2))/2 + pi;
+theta_aI = (stimvals(1) + stimvals(2))/2 + pi;
 
 theta_s = stimvals(q);
 
@@ -116,29 +113,34 @@ end
 
 %% Stimulus drive
 
-IE_FF_area = 0.005 * 100;  %% seems to implement a gain function
+IE_FF_area = 0.005 * 100;  %% 
 kE_FF = 0.1*kEE;
 IE_FF = (IE_FF_area / (2*pi* besseli(0,kE_FF))) * exp(kE_FF * cos(theta_pE - theta_s))';  
 
-II_FF = -0 * ones([NI,1]); %% seems to implement subtractive normalisation
+II_FF = -0 * ones([NI,1]); %% 
 
-IE_TD_area = IE_FF_area / 10 * 0.5 * (p-1);
-kE_TD = 0.05 * 20 * kEE * 0;
+IE_TD_area = 0.01 * (p1-3);
+kE_TD = 1.0;
 
-II_TD_area = IE_FF_area / 10 * (p-6);
-kI_TD = 0.0;
+II_TD_area = 0.01 * (p2-3);
+kI_TD = 1.0;
 
-TD = 'Inh';
+TD = 'Both';
 
 if strmatch(TD, 'Exc')
 
-    IE_TD = (IE_TD_area / (2*pi* besseli(0,kE_TD))) * exp(kE_TD * cos(theta_pE - theta_a))';
+    IE_TD = (IE_TD_area / (2*pi* besseli(0,kE_TD))) * exp(kE_TD * cos(theta_pE - theta_aE))';
     II_TD = 0.00000 * ones(size(II_FF));
 
 elseif strmatch(TD, 'Inh')
     
     IE_TD =  0.00000 * ones(size(IE_FF));
-    II_TD = II_TD_area / (2*pi* besseli(0,kE_TD)) * exp(kI_TD * cos(theta_pI - theta_a))';
+    II_TD = II_TD_area / (2*pi* besseli(0,kE_TD)) * exp(kI_TD * cos(theta_pI - theta_aI))';
+
+elseif strmatch(TD, 'Both')
+    
+    IE_TD = (IE_TD_area / (2*pi* besseli(0,kE_TD))) * exp(kE_TD * cos(theta_pE - theta_aE))';
+    II_TD = II_TD_area / (2*pi* besseli(0,kE_TD)) * exp(kI_TD * cos(theta_pI - theta_aI))';
 
 end
     
@@ -241,19 +243,20 @@ for iv1 = 1:Nstim
     end
 end
 
-RE_covtot1{p} = RE0_cov(:,:,1);
-RE_covtot2{p} = RE0_cov(:,:,2);
-SItot_E(p) = squeeze(RE0(:,1) - RE0(:,2))' * inv(0.5 * (RE_covtot1{p} + RE_covtot2{p})) * squeeze(RE0(:,1) - RE0(:,2)); 
-SItot_E_ind(p) =  squeeze(RE0(:,1) - RE0(:,2))' * inv(0.5 * diag(diag(RE_covtot1{p} + RE_covtot2{p}))) * squeeze(RE0(:,1) - RE0(:,2)); 
-SI_I(p) = m0I(1,2);
-SI_E(p) = m0E(1,2);
+RE_covtot1{p1,p2} = RE0_cov(:,:,1);
+RE_covtot2{p1,p2} = RE0_cov(:,:,2);
+SItot_E(p1,p2) = squeeze(RE0(:,1) - RE0(:,2))' * inv(0.5 * (RE_covtot1{p1,p2} + RE_covtot2{p1,p2})) * squeeze(RE0(:,1) - RE0(:,2)); 
+SItot_E_ind(p1,p2) =  squeeze(RE0(:,1) - RE0(:,2))' * inv(0.5 * diag(diag(RE_covtot1{p1,p2} + RE_covtot2{p1,p2}))) * squeeze(RE0(:,1) - RE0(:,2)); 
+SI_I(p1,p2) = m0I(1,2) / NI;
+SI_E(p1,p2) = m0E(1,2) / NE;
 
 %[V,D] = (eig(RE_covtot1 + RE_covtot2 ));
 %plot((squeeze(RE0(:,1) - RE0(:,2))' * V * inv(D)).^2)
 
-RE_covtot1_TD{p} = RE0_cov_TD(:,:,1);
-RE_covtot2_TD{p} = RE0_cov_TD(:,:,2);
-SItot_E_TD(p) = squeeze(RE0_TD(:,1) - RE0_TD(:,2))' * inv(0.5 * (RE_covtot1_TD{p} + RE_covtot2_TD{p})) * squeeze(RE0_TD(:,1) - RE0_TD(:,2)); 
-SItot_E_ind_TD(p) =  squeeze(RE0_TD(:,1) - RE0_TD(:,2))' * inv(0.5 * diag(diag(RE_covtot1_TD{p} + RE_covtot2_TD{p}))) * squeeze(RE0_TD(:,1) - RE0_TD(:,2)); 
+RE_covtot1_TD{p1,p2} = RE0_cov_TD(:,:,1);
+RE_covtot2_TD{p1,p2} = RE0_cov_TD(:,:,2);
+SItot_E_TD(p1,p2) = squeeze(RE0_TD(:,1) - RE0_TD(:,2))' * inv(0.5 * (RE_covtot1_TD{p1,p2}+ RE_covtot2_TD{p1,p2})) * squeeze(RE0_TD(:,1) - RE0_TD(:,2)); 
+SItot_E_ind_TD(p1,p2) =  squeeze(RE0_TD(:,1) - RE0_TD(:,2))' * inv(0.5 * diag(diag(RE_covtot1_TD{p1,p2} + RE_covtot2_TD{p1,p2}))) * squeeze(RE0_TD(:,1) - RE0_TD(:,2)); 
 
+end
 end
