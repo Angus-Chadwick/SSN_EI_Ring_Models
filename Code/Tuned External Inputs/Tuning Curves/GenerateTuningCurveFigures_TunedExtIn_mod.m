@@ -5,7 +5,7 @@
 
 clear all
 
-Match_SI = 0; % choose whether to adjust average E<->I weights to match selectivity across network types 
+Match_SI = 1; % choose whether to adjust average E<->I weights to match selectivity across network types 
 
 % simulation parameters
 

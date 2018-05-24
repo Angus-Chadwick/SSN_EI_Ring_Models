@@ -37,6 +37,7 @@ IE_TD_area = 0.0;
 II_TD_area = 0.0;
 
 stimvals = 2*pi * [90, 270] / 360;
+IE_FF_areas = [0.4,0.6];
 Nstim = length(stimvals); 
        
 %%
@@ -88,8 +89,8 @@ network = create_network(kEI,kIE,JEI_mean,JIE_mean);
 NE = network.cells.NE;
 NI = network.cells.NI;
 
-inputs1  = create_inputs(stimvals(1), theta_aE, theta_aI, noise, kE_FF, IE_FF_area, kE_TD, IE_TD_area, kI_TD, II_TD_area, network);
-inputs2  = create_inputs(stimvals(2), theta_aE, theta_aI, noise, kE_FF, IE_FF_area, kE_TD, IE_TD_area, kI_TD, II_TD_area, network);
+inputs1  = create_inputs(stimvals(1), theta_aE, theta_aI, noise, kE_FF, IE_FF_areas(1), kE_TD, IE_TD_area, kI_TD, II_TD_area, network);
+inputs2  = create_inputs(stimvals(2), theta_aE, theta_aI, noise, kE_FF, IE_FF_areas(2), kE_TD, IE_TD_area, kI_TD, II_TD_area, network);
 inputs  = inputs1;
 inputs.IE_FF = (inputs1.IE_FF + inputs2.IE_FF);
 
@@ -115,13 +116,13 @@ end
 
 % Analyse results
 
-RE0{m} = mean(cat(3,RE{:}),3);
-RI0{m} = mean(cat(3,RI{:}),3);
+RE0{m} = mean(cat(3,RE{m,:}),3);
+RI0{m} = mean(cat(3,RI{m,:}),3);
 
-RE0_std{m} = mean(cat(3,RE_std{:}),3);
-RI0_std{m} = mean(cat(3,RI_std{:}),3);
+RE0_std{m} = mean(cat(3,RE_std{m,:}),3);
+RI0_std{m} = mean(cat(3,RI_std{m,:}),3);
 
-RE0_cov{m} = mean(cat(4,RE_cov{:}),4);
+RE0_cov{m} = mean(cat(4,RE_cov{m,:}),4);
 
        
         ExternalE_Input{m} = inputs.IE_FF;
