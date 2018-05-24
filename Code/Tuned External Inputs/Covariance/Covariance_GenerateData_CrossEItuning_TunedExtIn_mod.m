@@ -63,14 +63,14 @@ parfor n=1:Nloop
             [rE, rI]       = SimulateNetwork_mod(network, inputs, Nt, NoiseModel);
 
     
-    RE{n}(:,q) = mean(rE(:,300:end),2);
-    RI{n}(:,q) = mean(rI(:,300:end),2);
+    RE{n}(:,q) = mean(rE(:,1000:end),2);
+    RI{n}(:,q) = mean(rI(:,1000:end),2);
     
-    RE_std{n}(:,q) = std(rE(:,300:end),[],2);
-    RI_std{n}(:,q) = std(rI(:,300:end),[],2);
+    RE_std{n}(:,q) = std(rE(:,1000:end),[],2);
+    RI_std{n}(:,q) = std(rI(:,1000:end),[],2);
 
 
-    RE_cov{n}(:,:,q) = cov([rE(:,300:end); rI(:,300:end)]')
+    RE_cov{n}(:,:,q) = cov([rE(:,1000:end); rI(:,1000:end)]')
 
 end
 
@@ -79,6 +79,7 @@ end
 
 end
 
+            [rE, rI]       = SimulateNetwork_mod(network, inputs, Nt, NoiseModel); % one sample for figure
 
 RE0 = mean(cat(3,RE{:}),3);
 RI0 = mean(cat(3,RI{:}),3);
@@ -87,8 +88,12 @@ RE0_std = mean(cat(3,RE_std{:}),3);
 RI0_std = mean(cat(3,RI_std{:}),3);
 
 RE0_cov = mean(cat(4,RE_cov{:}),4);
-Rtot0_cov = mean(cat(4,Rtot_cov{:}),4);
 
+clear RE
+clear RI
+clear RE_std
+clear RI_std
+clear RE_cov
 
 mmE = zeros(Nstim);
 mmI = zeros(Nstim);
@@ -136,8 +141,4 @@ end
 
 RE_covtot1 = RE0_cov(:,:,1);
 RE_covtot2 = RE0_cov(:,:,2);
-%SItot_E = squeeze(RE0(:,1) - RE0(:,2))' * inv(0.5 * (RE_covtot1 + RE_covtot2)) * squeeze(RE0(:,1) - RE0(:,2)); 
-%SItot_E_ind =  squeeze(RE0(:,1) - RE0(:,2))' * inv(0.5 * diag(diag(RE_covtot1 + RE_covtot2))) * squeeze(RE0(:,1) - RE0(:,2)); 
-%SI_I = m0I(1,2);
-%SI_E = m0E(1,2);
 
