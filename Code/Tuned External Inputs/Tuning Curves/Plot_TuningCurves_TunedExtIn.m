@@ -1,7 +1,7 @@
 clear all
 
 %ROOT     = '/nfs/nhome/live/angus/Documents/SSN_Paper/New_Code/'
-ROOT     = '/home/angusc/Documents/MATLAB/SSN_EI_Ring_Models/SSN_EI_Ring_Models-master/Tuned External Inputs/Tuning Curves/'
+ROOT     = '/mnt/data/angusc/Data/Tuned External Inputs/Tuning Curves/';
 
 
 X = 'TuningCurves_TunedExtIn.mat'; 

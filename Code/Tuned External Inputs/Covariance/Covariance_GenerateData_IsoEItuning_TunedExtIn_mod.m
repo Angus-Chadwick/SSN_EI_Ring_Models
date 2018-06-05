@@ -6,6 +6,8 @@ clear all
 Nloop = 1000;  % number of simulations for each parameter set
 Nt = 10000;  % number of timesteps
 
+Match_SI = 1;
+
 % initialise variables
 
 RE = cell([Nloop, 1]);
@@ -20,6 +22,13 @@ Rtot_cov = RE;
 JEI_mean = 0.04 ;  
 JIE_mean = 0.04 ;
 
+if Match_SI == 1
+
+    JEI_mean = 0.0265;
+    JIE_mean = 0.0265;
+
+end
+    
 kIE = 0.5;
 kEI = +0.5;
 
