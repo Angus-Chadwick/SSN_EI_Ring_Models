@@ -65,16 +65,13 @@ elseif m==2 % iso-orientation inhibition
 kIE = 0.5; 
 kEI = 0.5;
 
-%kEI = 0.3;
-%kIE = 0.3;
-
 if Match_SI == 1
+% 
+% JEI_mean = 0.0265;  % match SI
+% JIE_mean = 0.0265;
 
-JEI_mean = 0.0265;
-JIE_mean = 0.0265;
-
-%JEI_mean = 0.0315;
-%JIE_mean = 0.0315;
+JEI_mean = 0.025;   % super SI (0.025 gives 2.18, 0.245 worse, 0.255 worse )
+JIE_mean = 0.025;
 
 end
 

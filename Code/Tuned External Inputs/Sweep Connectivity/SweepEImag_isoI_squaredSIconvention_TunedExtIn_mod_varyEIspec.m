@@ -32,17 +32,22 @@ IE_FF_area = 0.005 * 100;
 IE_TD_area = 0.0;
 II_TD_area = 0.0;
 
-for nEI = 1:Nvals
-    nEI
-    for nIE = 26:Nvals
-    
+% fixed connectivity parameters
 
+kEI = 1;
+kIE = 0.5;
+
+for nI = 1:Nvals
+    nI
+    for nE = 1:Nvals
+    
     for q=1:Nstim
-     
+ 
 % create network        
 
-kIE = kEE *  (nIE - 26) /20; % E to I concentration
-kEI = kEE *  (nEI - 26) /20; % I to E concentration
+
+JEI_mean(nI,nE) = 0.1/Nvals * nI;
+JIE_mean(nI,nE) = 0.1/Nvals * nE;
 
 network = create_network(kEI,kIE,JEI_mean(nI,nE),JIE_mean(nI,nE));
 
@@ -55,7 +60,7 @@ theta_s = stimvals(q);
 
 inputs  = create_inputs(theta_s, theta_aE, theta_aI, noise, kE_FF, IE_FF_area, kE_TD, IE_TD_area, kI_TD, II_TD_area, network);
 
-   
+    
 
 %% simulate
 
@@ -64,7 +69,7 @@ NoiseModel = 'Add';
 
 parfor n=1:Nloop
 
-    [rE, rI]       = SimulateNetwork(IE_FF, 0*IE_TD, II_FF, 0*II_TD, JEE, JEI, JIE, JII, noise, gamma, tauE, tauI, Nt, NoiseModel);
+            [rE, rI]       = SimulateNetwork_mod(network, inputs, Nt, NoiseModel);
 
     
     RE{n}(:,q) = mean(rE(:,1000:end),2);
@@ -81,6 +86,7 @@ end
 
     end
 
+%% analyse outputs
 
 
 RE0 = mean(cat(3,RE{:}),3);
@@ -132,33 +138,30 @@ iv1 = 1;iv2 = 2;
 
         m0I(iv1,iv2) = nansum(SI0I);
 
-RE_covtot1{nEI,nIE} = RE0_cov(:,:,1);
-RE_covtot2{nEI,nIE} = RE0_cov(:,:,2);
-SItot_E(nEI,nIE) = squeeze(RE0(:,1) - RE0(:,2))' * inv(0.5 * (RE_covtot1{nEI,nIE} + RE_covtot2{nEI,nIE})) * squeeze(RE0(:,1) - RE0(:,2)); 
-SItot_E_ind(nEI,nIE) =  squeeze(RE0(:,1) - RE0(:,2))' * inv(0.5 * diag(diag(RE_covtot1{nEI,nIE} + RE_covtot2{nEI,nIE}))) * squeeze(RE0(:,1) - RE0(:,2)); 
-SI_I(nEI,nIE) = m0I(1,2) / NI;
-SI_E(nEI,nIE) = m0E(1,2) / NE;
+RE_covtot1{nI,nE} = RE0_cov(:,:,1);
+RE_covtot2{nI,nE} = RE0_cov(:,:,2);
+SItot_E(nI,nE) = squeeze(RE0(:,1) - RE0(:,2))' * inv(0.5 * (RE_covtot1{nI,nE} + RE_covtot2{nI,nE})) * squeeze(RE0(:,1) - RE0(:,2)); 
+SItot_E_ind(nI,nE) =  squeeze(RE0(:,1) - RE0(:,2))' * inv(0.5 * diag(diag(RE_covtot1{nI,nE} + RE_covtot2{nI,nE}))) * squeeze(RE0(:,1) - RE0(:,2)); 
+SI_I(nI,nE) = m0I(1,2) / NI;
+SI_E(nI,nE) = m0E(1,2) / NE;
+
 
 
 %% Condition Covariance Matrix
 
-if ~isnan(sum(RE_covtot1{nEI,nIE} + RE_covtot2{nEI,nIE}))
+if ~isnan(sum(RE_covtot1{nI,nE} + RE_covtot2{nI,nE}))
 
-    SItot_E_pseudo(nEI,nIE) = squeeze(RE0(:,1) - RE0(:,2))' * pinv(0.5 * (RE_covtot1{nEI,nIE} + RE_covtot2{nEI,nIE})) * squeeze(RE0(:,1) - RE0(:,2)); 
+    SItot_E_pseudo(nI,nE) = squeeze(RE0(:,1) - RE0(:,2))' * pinv(0.5 * (RE_covtot1{nI,nE} + RE_covtot2{nI,nE})) * squeeze(RE0(:,1) - RE0(:,2)); 
 
 else
     
-    SItot_E_pseudo(nEI,nIE) = nan;
+    SItot_E_pseudo(nI,nE) = nan;
     
 end
 
-SItot_E_epsridge(nEI,nIE) = squeeze(RE0(:,1) - RE0(:,2))' * inv(0.5 * (RE_covtot1{nEI,nIE} + RE_covtot2{nEI,nIE} + 2 * eps * eye(1000))) * squeeze(RE0(:,1) - RE0(:,2)); 
-
+SItot_E_epsridge(nI,nE) = squeeze(RE0(:,1) - RE0(:,2))' * inv(0.5 * (RE_covtot1{nI,nE} + RE_covtot2{nI,nE} + 2 * eps * eye(1000))) * squeeze(RE0(:,1) - RE0(:,2)); 
 
     
     end
 end
-
-
-
 

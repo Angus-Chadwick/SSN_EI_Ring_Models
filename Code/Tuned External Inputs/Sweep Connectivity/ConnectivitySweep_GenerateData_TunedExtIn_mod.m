@@ -31,6 +31,8 @@ kI_TD = 0;
 IE_FF_area = 0.005 * 100;
 IE_TD_area = 0.0;
 II_TD_area = 0.0;
+JEI_mean = 0.04;
+JIE_mean = 0.04;
 
 for nEI = 1:Nvals
     nEI
@@ -41,10 +43,10 @@ for nEI = 1:Nvals
      
 % create network        
 
-kIE = kEE *  (nIE - 26) /20; % E to I concentration
-kEI = kEE *  (nEI - 26) /20; % I to E concentration
+kIE = (nIE - 26) /20; % E to I concentration
+kEI = (nEI - 26) /20; % I to E concentration
 
-network = create_network(kEI,kIE,JEI_mean(nI,nE),JIE_mean(nI,nE));
+network = create_network(kEI,kIE,JEI_mean,JIE_mean);
 
 NE = network.cells.NE;
 NI = network.cells.NI;
@@ -64,7 +66,7 @@ NoiseModel = 'Add';
 
 parfor n=1:Nloop
 
-    [rE, rI]       = SimulateNetwork(IE_FF, 0*IE_TD, II_FF, 0*II_TD, JEE, JEI, JIE, JII, noise, gamma, tauE, tauI, Nt, NoiseModel);
+            [rE, rI]       = SimulateNetwork_mod(network, inputs, Nt, NoiseModel);
 
     
     RE{n}(:,q) = mean(rE(:,1000:end),2);
@@ -78,6 +80,7 @@ parfor n=1:Nloop
     
 
 end
+
 
     end
 
