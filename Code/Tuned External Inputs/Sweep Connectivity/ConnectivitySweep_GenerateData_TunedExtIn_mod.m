@@ -5,7 +5,7 @@ clear all
 % simulation parameters
 
 Nloop = 5;  % number of simulations for each parameter set
-Nvals = 40;  % number of parameter sets
+Nvals = 51;  % number of parameter sets
 Nt = 10000;  % number of timesteps
 
 % initialise variables
