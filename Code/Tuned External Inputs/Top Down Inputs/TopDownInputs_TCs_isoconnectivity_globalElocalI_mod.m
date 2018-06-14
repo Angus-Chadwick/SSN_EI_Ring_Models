@@ -84,3 +84,10 @@ RE_covtot1_TD = RE0_cov_TD(:,:,1);
 RE_covtot2_TD = RE0_cov_TD(:,:,2);
 SItot_E_TD = squeeze(RE0_TD(:,1) - RE0_TD(:,2))' * inv(0.5 * (RE_covtot1_TD + RE_covtot2_TD)) * squeeze(RE0_TD(:,1) - RE0_TD(:,2)); 
 SItot_E_ind_TD =  squeeze(RE0_TD(:,1) - RE0_TD(:,2))' * inv(0.5 * diag(diag(RE_covtot1_TD + RE_covtot2_TD))) * squeeze(RE0_TD(:,1) - RE0_TD(:,2)); 
+
+
+%% Plot results
+
+
+
+

@@ -10,10 +10,10 @@ Nt = 10000;  % number of timesteps
 
 % fixed network parameters 
 
-kIE = 0.4; 
-kEI = 0.4;
-JEI_mean = 0.026;  
-JIE_mean = 0.026;
+kIE = 0.5; 
+kEI = 0.5;
+JEI_mean = 0.025;  
+JIE_mean = 0.025;
 
 network = create_network(kEI,kIE,JEI_mean,JIE_mean);
 
@@ -31,15 +31,15 @@ Nstim = length(stimvals);
 
 % simulate with different top-down inputs
 
-for p1 = 1:10
-for p2 = 1:10
+for p1 = 1:40
+for p2 = 1:40
     p1
     p2
 for q=1:Nstim
 
 theta_s = stimvals(q);
-IE_TD_area = 0.1 * (p1-1);
-II_TD_area = 0.1 * (p2-1);
+IE_TD_area = 0.025 * (p1-1);
+II_TD_area = 0.025 * (p2-1);
 
 inputs  = create_inputs(theta_s, theta_aE, theta_aI, noise, kE_FF, IE_FF_area, kE_TD, IE_TD_area, kI_TD, II_TD_area, network);
 

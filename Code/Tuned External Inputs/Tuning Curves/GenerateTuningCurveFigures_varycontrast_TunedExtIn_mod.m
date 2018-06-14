@@ -8,7 +8,7 @@ Match_SI = 1 % choose whether to adjust average E<->I weights to match selectivi
 
 % simulation parameters
 
-Nloop = 10;  % number of simulations for each parameter set
+Nloop = 30;  % number of simulations for each parameter set
 Nt = 10000;  % number of timesteps
 
 % initialise variables
@@ -38,12 +38,12 @@ II_TD_area = 0.0;
 
 stimvals = 2*pi * 180 / 360;
 
-Nstim = 100; 
+Nstim = 5; 
 
 
 %%
 
-for m=1:3
+for m=3:3
     
 for q=1:Nstim
     
@@ -97,7 +97,7 @@ NI = network.cells.NI;
 % create inputs
 
 theta_s = stimvals;
-IE_FF_area(q) = 0.005 * q;
+IE_FF_area(q) = 10 * q;
 
 inputs  = create_inputs(theta_s, theta_aE, theta_aI, noise, kE_FF, IE_FF_area(q), kE_TD, IE_TD_area, kI_TD, II_TD_area, network);
 

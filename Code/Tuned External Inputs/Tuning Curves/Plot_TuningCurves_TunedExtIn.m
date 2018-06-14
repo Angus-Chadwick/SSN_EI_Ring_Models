@@ -208,7 +208,7 @@ hold on
 
 plot(theta_pE * 180/pi, ExternalE_Input{m}, 'linewidth', 3, 'color', 'k', 'linestyle', '--')
 plot(theta_pE * 180/pi, RecurrentEE_Input{m}, 'linewidth', 3, 'color', 'b')
-plot(theta_pE * 180/pi, -RecurrentEI_Input{m}, 'linewidth', 3, 'color', 'r')
+plot(theta_pE * 180/pi, RecurrentEI_Input{m}, 'linewidth', 3, 'color', 'r')
 plot(theta_pE * 180/pi, ExternalE_Input{m} + RecurrentEE_Input{m} - RecurrentEI_Input{m}, 'linewidth', 3, 'color', 'k')
 
 set(gca, 'fontsize', 18) 
@@ -234,7 +234,7 @@ hold on
 
 plot(theta_pI * 180/pi, ExternalI_Input{m}, 'linewidth', 3, 'color', 'k', 'linestyle', '--')
 plot(theta_pI * 180/pi, RecurrentIE_Input{m}, 'linewidth', 3, 'color', 'b')
-plot(theta_pI * 180/pi, -RecurrentII_Input{m}, 'linewidth', 3, 'color', 'r')
+plot(theta_pI * 180/pi, RecurrentII_Input{m}, 'linewidth', 3, 'color', 'r')
 plot(theta_pI * 180/pi, ExternalI_Input{m} + RecurrentIE_Input{m} - RecurrentII_Input{m}, 'linewidth', 3, 'color', 'k')
 
 set(gca, 'fontsize', 18) 
