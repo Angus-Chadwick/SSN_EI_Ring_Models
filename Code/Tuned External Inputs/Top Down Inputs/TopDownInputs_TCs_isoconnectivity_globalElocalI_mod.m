@@ -5,21 +5,20 @@ clear all
 % simulation parameters
 
 Nloop = 10;  % number of simulations for each parameter set
-Nvals = 20;  % number of parameter sets
 Nt = 10000;  % number of timesteps
 
 % fixed network parameters 
 
-kIE = 0.4; 
-kEI = 0.4;
-JEI_mean = 0.026;  
-JIE_mean = 0.026;
+kIE = 0.5; 
+kEI = 0.5;
+JEI_mean = 0.025;  
+JIE_mean = 0.025;
 
 network = create_network(kEI,kIE,JEI_mean,JIE_mean);
 
 % fixed input parameters
 
-stimvals = 2*pi * [160,200] / 360;
+stimvals = 2*pi * [10:10:360] / 360;
 theta_aE = (stimvals(1) + stimvals(2))/2 + pi;
 theta_aI = (stimvals(1) + stimvals(2))/2;
 noise = 2;
@@ -69,22 +68,12 @@ parfor n=1:Nloop
     
 end
 
+
+
+RE0_TD{q} = mean(cat(3,RE_TD{:}),3);
+RI0_TD{q} = mean(cat(3,RI_TD{:}),3);
+
 end
-
-RE0_TD = mean(cat(3,RE_TD{:}),3);
-RI0_TD = mean(cat(3,RI_TD{:}),3);
-
-RE0_std_TD = mean(cat(3,RE_std_TD{:}),3);
-RI0_std_TD = mean(cat(3,RI_std_TD{:}),3);
-
-RE0_cov_TD = mean(cat(4,RE_cov_TD{:}),4);
-Rtot0_cov_TD = mean(cat(4,Rtot_cov_TD{:}),4);
-
-RE_covtot1_TD = RE0_cov_TD(:,:,1);
-RE_covtot2_TD = RE0_cov_TD(:,:,2);
-SItot_E_TD = squeeze(RE0_TD(:,1) - RE0_TD(:,2))' * inv(0.5 * (RE_covtot1_TD + RE_covtot2_TD)) * squeeze(RE0_TD(:,1) - RE0_TD(:,2)); 
-SItot_E_ind_TD =  squeeze(RE0_TD(:,1) - RE0_TD(:,2))' * inv(0.5 * diag(diag(RE_covtot1_TD + RE_covtot2_TD))) * squeeze(RE0_TD(:,1) - RE0_TD(:,2)); 
-
 
 %% Plot results
 

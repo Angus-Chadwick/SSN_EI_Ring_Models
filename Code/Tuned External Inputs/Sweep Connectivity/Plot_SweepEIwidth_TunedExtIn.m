@@ -24,7 +24,7 @@ title('Selectivity (Pyramidal Cells)')
 axis([(1-26)/20, (Nvals - 26)/20, 0, (Nvals - 26)/20])
 h = colorbar;
 set(h, 'fontsize', 18)
-title(h, 'SI')
+title(h, 'log SI')
 
 hold on
 plot(0.5,0.5, 'linewidth',3, 'linestyle','none', 'marker', '+', 'markersize', 25, 'color', [0.418,0.418,0.418])
@@ -44,7 +44,7 @@ title('Selectivity (Interneurons)')
 axis([(1-26)/20, (Nvals - 26)/20, 0, (Nvals - 26)/20])
 h = colorbar;
 set(h, 'fontsize', 18)
-title(h, 'SI')
+title(h, 'log SI')
 
 hold on
 plot(0.5,0.5, 'linewidth',3, 'linestyle','none', 'marker', '+', 'markersize', 25, 'color', [0.418,0.418,0.418])
