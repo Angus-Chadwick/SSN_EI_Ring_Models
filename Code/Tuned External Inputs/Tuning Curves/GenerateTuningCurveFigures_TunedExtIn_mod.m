@@ -5,7 +5,7 @@
 
 clear all
 
-Match_SI = 1; % choose whether to adjust average E<->I weights to match selectivity across network types 
+Match_SI = 0; % choose whether to adjust average E<->I weights to match selectivity across network types 
 
 % simulation parameters
 
@@ -66,14 +66,28 @@ kIE = 0.5;
 kEI = 0.5;
 
 if Match_SI == 1
-% 
-% JEI_mean = 0.0265;  % match SI
+
+% JEI_mean = 0.0265;  % match single-cell SI
 % JIE_mean = 0.0265;
 
 JEI_mean = 0.025;   % super SI (0.025 gives 2.18, 0.245 worse, 0.255 worse )
 JIE_mean = 0.025;
 
 end
+% 
+%  kIE = 0.1; 
+%  kEI = 1;
+%  
+%  if Match_SI == 1
+%  
+%  % JEI_mean = 0.0265;  % match single-cell SI
+%  % JIE_mean = 0.0265;
+%  
+%  JEI_mean = 0.019;   % super SI (0.025 gives 2.18, 0.245 worse, 0.255 worse )
+%  JIE_mean = 0.038;
+%  
+% end
+
 
 elseif m == 3 % cross-orientation inhibition
 
@@ -123,7 +137,7 @@ parfor n=1:Nloop
     RI_std{n}(:,q) = std(rI(:,300:end),[],2);
 
 
-    RE_cov{n}(:,:,q) = cov([rE(:,300:end); rI(:,300:end)]')
+    RE_cov{n}(:,:,q) = cov([rE(:,300:end)]')
 
 end
 
@@ -188,6 +202,20 @@ iv1 = 1; iv2 = 2;
         ExternalI_Input{m} = inputs.II_FF;
         RecurrentIE_Input{m} = network.connectivity.JIE * RE0_ang{m};
         RecurrentII_Input{m} = network.connectivity.JII * RI0_ang{m};
+        
+        SItot_E_epsridge(m) = squeeze(RE0(:,1) - RE0(:,2))' * inv(0.5 * (RE_covtot1{m} + RE_covtot2{m} + 2 * eps * eye(1000))) * squeeze(RE0(:,1) - RE0(:,2)); 
+
+        % compute network jacobian 
+        
+        inputs_nonoise = inputs;
+        inputs_nonoise.noise = 0;
+        [rE, rI]       = SimulateNetwork_mod(network, inputs_nonoise, Nt, NoiseModel);
+        
+        
+        W = [network.connectivity.JEE, -network.connectivity.JEI; network.connectivity.JIE, -network.connectivity.JII];
+        Phip = diag(2 * [mean(rE'),mean(rI')].^(1/2));
+        T = diag([network.cells.tauE * ones(1000,1); network.cells.tauI * ones(200,1)]);
+        Jstar{m} = inv(T) * (Phip * W - eye(1200));
         
 end
 

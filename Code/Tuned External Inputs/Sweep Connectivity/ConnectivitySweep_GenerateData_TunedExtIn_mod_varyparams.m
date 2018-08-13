@@ -31,8 +31,8 @@ kI_TD = 0;
 IE_FF_area = 0.005 * 100;
 IE_TD_area = 0.0;
 II_TD_area = 0.0;
-JIE_mean = 0.019;
-JEI_mean = JIE_mean * 2;     % inhibitory synapses 4x stronger?
+JIE_mean = 0.038;
+JEI_mean = JIE_mean / 2;     % inhibitory synapses 4x stronger?
 
 for nEI = 1:Nvals
     nEI
