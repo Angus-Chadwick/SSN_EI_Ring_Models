@@ -30,7 +30,12 @@ JIE_mean = 0.04 ;
 
 theta_aE = 0;
 theta_aI = 0;
-noise = 2;
+
+%% TRY REDUCING NOISE
+
+noise = 0;
+%%
+
 kE_FF = 0.5;
 kE_TD = 0;
 kI_TD = 0;
@@ -49,14 +54,14 @@ for m=1:2
     
 if m==1 % pre
 
-kEE = 1;    
-kIE = 0.1; 
+kEE = 2.71;    
+kIE = 0.5; 
 kEI = 0.5;
 
 elseif m==2 % post
 
-kEE = 2;    
-kIE = 0.3; 
+kEE = 2.725;
+kIE = 0.5;
 kEI = 0.5;
 
 end
@@ -83,14 +88,14 @@ parfor n=1:Nloop
             [rE, rI]       = SimulateNetwork_mod(network, inputs, Nt, NoiseModel);
 
     
-    RE{n}(:,q) = mean(rE(:,300:end),2);
-    RI{n}(:,q) = mean(rI(:,300:end),2);
+    RE{n}(:,q) = mean(rE(:,5000:end),2);
+    RI{n}(:,q) = mean(rI(:,5000:end),2);
     
-    RE_std{n}(:,q) = std(rE(:,300:end),[],2);
-    RI_std{n}(:,q) = std(rI(:,300:end),[],2);
+    RE_std{n}(:,q) = std(rE(:,5000:end),[],2);
+    RI_std{n}(:,q) = std(rI(:,5000:end),[],2);
 
 
-    RE_cov{n}(:,:,q) = cov([rE(:,300:end)]')
+    RE_cov{n}(:,:,q) = cov([rE(:,5000:end)]')
 
 end
 
@@ -160,17 +165,43 @@ iv1 = 1; iv2 = 2;
 
         % compute network jacobian 
         
-%         inputs_nonoise = inputs;
-%         inputs_nonoise.noise = 0;
-%         [rE, rI]       = SimulateNetwork_mod(network, inputs_nonoise, Nt, NoiseModel);
-        [rE, rI]       = SimulateNetwork_mod(network, inputs, Nt, NoiseModel);
 
+        R0       = [RE0_ang{m}', RI0_ang{m}'];
         
         W = [network.connectivity.JEE, -network.connectivity.JEI; network.connectivity.JIE, -network.connectivity.JII];
-        Phip = diag(2 * [mean(rE'),mean(rI')].^(1/2));
-        T = diag([network.cells.tauE * ones(1000,1); network.cells.tauI * ones(200,1)]);
-        Jstar{m} = inv(T) * (Phip * W - eye(1200));
+        Phip = diag(2 * R0.^(1/2));
+        T = diag([network.cells.tauE * ones(NE,1); network.cells.tauI * ones(NI,1)]);
+        Jstar{m} = inv(T) * (Phip * W - eye(NE+NI));
+%         SE = find(mean(rE(:,5000:end),2) > eps);
+%         SE(1) = [];
+%         SE(end) = [];
+%         SI = find(mean(rI(:,5000:end),2) > eps);
+%         SI(1) = [];
+%         SI(end) = [];
+%         S = zeros([NE + NI,1]);
+%         S(SE) = 1;
+%         S(NE+SI) = 1;
+%         S = logical(S);
         
+        Jstar{m} = Jstar{m}; 
+        [V{m},D{m}] = eig(Jstar{m});
+        D{m} = diag(D{m});
+        [~,I{m}] = sort(real(D{m}), 'descend');
+        D{m} = D{m}(I{m});
+        V{m} = V{m}(:,I{m});
+        R{m} = find(imag(D{m}) == 0);
+%         hold on
+%         plot(D{m}(R{m}));
+              
+        optvec{m} =  inv(Phip) * T * diag(1./[inputs.noise * mean(inputs.IE_FF) * ones(NE,1); inputs.noise/2 * mean(inputs.IE_FF) * ones(NI,1)]) * T * [inputs.IE_FF .* (- kE_FF * sin(inputs.theta_pE - theta_s))'; zeros(NI,1)];
+        optvec{m} = optvec{m} / norm(optvec{m});
+        
+        Vleft{m} = pinv(V{m});
+        for i=1:length(R{m})
+            Vleft{m}(R{m}(i),:) = Vleft{m}(R{m}(i),:) ./ norm(  Vleft{m}(R{m}(i),:));
+            angle{m}(R{m}(i)) = -abs(180 /pi * acos(Vleft{m}(R{m}(i),:) * optvec{m}) - 90) + 90;
+        end
+                
 end
 
 
