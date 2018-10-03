@@ -190,21 +190,21 @@ R0 = [mean(rE(:,5000:end),2)', mean(rI(:,5000:end),2)'];
         Jstar{m} = Jstar{m}; 
         [V{m},D{m}] = eig(Jstar{m});
         D{m} = diag(D{m});
-%         [~,I{m}] = sort(real(D{m}), 'descend');
-%         D{m} = D{m}(I{m});
-%         V{m} = V{m}(:,I{m});
-%         R{m} = find(imag(D{m}) == 0);
+        [~,I{m}] = sort(real(D{m}), 'descend');
+        D{m} = D{m}(I{m});
+        V{m} = V{m}(:,I{m});
+        R{m} = find(imag(D{m}) == 0);
 % %         hold on
 % %         plot(D{m}(R{m}));
 %               
-%         optvec{m} =  inv(Phip) * T * diag(1./[inputs.noise * mean(inputs.IE_FF) * ones(NE,1); inputs.noise/2 * mean(inputs.IE_FF) * ones(NI,1)]) * T * [inputs.IE_FF .* (- kE_FF * sin(inputs.theta_pE - theta_s))'; zeros(NI,1)];
-%         optvec{m} = optvec{m} / norm(optvec{m});
-%         
-%         Vleft{m} = pinv(V{m});
-%         for i=1:length(R{m})
-%             Vleft{m}(R{m}(i),:) = Vleft{m}(R{m}(i),:) ./ norm(  Vleft{m}(R{m}(i),:));
-%             angle{m}(R{m}(i)) = -abs(180 /pi * acos(Vleft{m}(R{m}(i),:) * optvec{m}) - 90) + 90;
-%         end
+        optvec{m} =  inv(Phip) * T * diag(1./[inputs.noise * mean(inputs.IE_FF) * ones(NE,1); inputs.noise/2 * mean(inputs.IE_FF) * ones(NI,1)]) * T * [inputs.IE_FF .* (- kE_FF * sin(inputs.theta_pE - theta_s))'; zeros(NI,1)];
+        optvec{m} = optvec{m} / norm(optvec{m});
+        
+        Vleft{m} = pinv(V{m});
+        for i=1:length(R{m})
+            Vleft{m}(R{m}(i),:) = Vleft{m}(R{m}(i),:) ./ norm(  Vleft{m}(R{m}(i),:));
+            angle{m}(R{m}(i)) = -abs(180 /pi * acos(Vleft{m}(R{m}(i),:) * optvec{m}) - 90) + 90;
+        end
 %                 
 end
 
