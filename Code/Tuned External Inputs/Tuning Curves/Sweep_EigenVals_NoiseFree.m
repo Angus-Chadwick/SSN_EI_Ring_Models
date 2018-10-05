@@ -35,8 +35,8 @@ JIE_mean = 0.04;
 
 kEI = 0.5;
 
-stepEE = 25 /5 ;
-stepIE = 50 / 5;
+stepEE = 25 /5  ;
+stepIE = 50 /5;
 
 for nEI = 1:Nvals
     nEI
@@ -68,18 +68,10 @@ inputs  = create_inputs(theta_s, theta_aE, theta_aI, noise, kE_FF, IE_FF_area, k
 
 [rE, rI]       = SimulateNetwork_mod(network, inputs, Nt, NoiseModel);
 
-R0 = [mean(rE(:,(Nt/2):end),2)', mean(rI(:,(Nt/2):end),2)'];
+StableSim(nEI,nIE) = ~isnan(sum(rE(:)));
 
-
-if ~isnan(sum(R0))
-        W = [network.connectivity.JEE, -network.connectivity.JEI; network.connectivity.JIE, -network.connectivity.JII];
-        Phip = diag(2 * R0.^(1/2));
-        T = diag([network.cells.tauE * ones(NE,1); network.cells.tauI * ones(NI,1)]);
-        Jstar = inv(T) * (Phip * W - eye(NE+NI));
-        
-        DerivativeNorm(nEI,nIE) = norm(inv(T) * ( R0' - max(0, W * R0' + [inputs.IE_FF', inputs.II_FF']').^2));
-        
-        if DerivativeNorm(nEI,nIE) > 0.001
+if StableSim(nEI,nIE) R0 = [mean(rE(:,(Nt/2):end),2)', mean(rI(:,(Nt/2):end),2)'];else R0 = zeros([1,NE+NI]);end  % set initial guess
+    
             
             FixedPointFinder;
             R0 = rmin';
@@ -87,8 +79,8 @@ if ~isnan(sum(R0))
             Jstar = inv(T) * (Phip * W - eye(NE+NI));
         
             DerivativeNorm(nEI,nIE) = norm(inv(T) * ( R0' - max(0, W * R0' + [inputs.IE_FF', inputs.II_FF']').^2));
+            FixedPoint{nEI,nIE} = R0;
         
-        end
         
         [V,D] = eig(Jstar);
         Evals{nEI,nIE} = diag(D);
@@ -99,8 +91,7 @@ if ~isnan(sum(R0))
         Inp = (Phip * [inputs.IE_FF .* (- kE_FF * sin(inputs.theta_pE - theta_s))'; zeros(NI,1)]);
         optvec =  Inp ./ diag(CovInp); % works only for diagonal input covariance
         optvec(Inp == 0) = 0;
-        optvec = optvec / norm(optvec);
-        
+        optvec = optvec / norm(optvec);        
         
         Vleft = pinv(V);
         for i=1:size(Vleft,1)
@@ -111,78 +102,119 @@ if ~isnan(sum(R0))
         
         Angles{nEI,nIE} = angle;
         
-end
+
 
     end
 end
 
+kEE = [0:(nIE-1)] / stepEE;
+kIE = [0:(nEI-1)] / stepIE;
 
-kEE = ([1:nIE]-1) / stepEE;
-kIE = ([1:nEI]-1) / stepIE;
-
-for i=1:size(Evals,1)
-for j=1:size(Evals,2)
-if numel(Evals{i,j}) > 0
-l(i,j) = max(real(Evals{i,j}));
-lim(i,j) = imag(Evals{i,j}(find(real(Evals{i,j}) == max(real(Evals{i,j})),1))); 
-a(i,j) = Angles{i,j}(find(real(Evals{i,j}) == l(i,j),1));
-amin(i,j) = min(Angles{i,j});
-if ~isnan(amin(i,j))
-l_amin(i,j) = real(Evals{i,j}(find(Angles{i,j} == amin(i,j),1))); 
-else l_amin(i,j) = nan;
-end
-else l(i,j) = nan;
-end
+for i=1:size(Evals,2)
+for j=1:size(Evals,1)
+M(j,i) = max(real(Evals{j,i}));
 end
 end
 
-subplot(1,3,1)
-imagesc(kEE(1:size(l,2)), kIE(1:size(l,1)), (l < 0) + 2 * isnan(l))
-set(gca, 'ydir', 'normal')
-set(gca, 'fontsize', 18)
-xlabel('Tuning of E to E weights (k_{EE})')
-ylabel('Tuning of E to I weights (k_{IE})')
-subplot(1,3,2)
-imagesc(kEE(1:size(l,2)), kIE(1:size(l,1)), l)
-h = colorbar;
-set(gca, 'clim', [-0.1,0.1])
-set(gca, 'fontsize', 18)
-set(gca, 'ydir', 'normal')
-xlabel('Tuning of E to E weights (k_{EE})')
-ylabel('Tuning of E to I weights (k_{IE})')
-title(h, 'max(real(\lambda))')
-subplot(1,3,3)
-imagesc(kEE(1:size(l,2)), kIE(1:size(l,1)),a)
-h = colorbar;
-set(gca, 'ydir', 'normal')
-set(gca, 'fontsize', 18)
-xlabel('Tuning of E to E weights (k_{EE})')
-ylabel('Tuning of E to I weights (k_{IE})')
-title(h, 'angle')
+LocalStableFP = (M < 0 & DerivativeNorm < 0.0001);
+LocalUnstableFP = (M > 0 & DerivativeNorm < 0.0001);
+NoFP = DerivativeNorm > 0.01;
+StableSim;
 
-figure 
+imagesc(kEE,kIE,LocalStableFP + 2 * LocalUnstableFP + 3 * NoFP)
 
-subplot(1,3,1)
-imagesc(kEE(1:size(l,2)), kIE(1:size(l,1)), (l < 0) + 2 * isnan(l))
-set(gca, 'ydir', 'normal')
-set(gca, 'fontsize', 18)
-xlabel('Tuning of E to E weights (k_{EE})')
-ylabel('Tuning of E to I weights (k_{IE})')
-subplot(1,3,2)
-imagesc(kEE(1:size(l,2)), kIE(1:size(l,1)), l_amin)
-h = colorbar;
-set(gca, 'clim', [-0.1,0.1])
-set(gca, 'fontsize', 18)
-set(gca, 'ydir', 'normal')
-xlabel('Tuning of E to E weights (k_{EE})')
-ylabel('Tuning of E to I weights (k_{IE})')
-title(h, 'real(\lambda)')
-subplot(1,3,3)
-imagesc(kEE(1:size(l,2)), kIE(1:size(l,1)),amin)
-h = colorbar;
-set(gca, 'ydir', 'normal')
-set(gca, 'fontsize', 18)
-xlabel('Tuning of E to E weights (k_{EE})')
-ylabel('Tuning of E to I weights (k_{IE})')
-title(h, 'min angle')
+% 
+% 
+[I,J] = sort(real(Evals{nEI,nIE}), 'descend');
+for i=1:3
+        
+subplot(3,2,2*i-1)
+hold on
+plot(real(V(:,J(i))), 'linewidth', 3)
+plot(imag(V(:,J(i))), 'linewidth', 3)
+xlabel('Cell id')
+ylabel('Right Eigenvector Element')
+legend('Real(v)', 'Imag(v)')
+title(strcat('\lambda = ', num2str(Evals{nEI,nIE}(J(i)))))
+
+subplot(3,2,2*i)
+hold on
+plot(real(Vleft(J(i),:)), 'linewidth', 3)
+plot(imag(Vleft(J(i),:)), 'linewidth', 3)
+xlabel('Cell id')
+ylabel('Left Eigenvector Element')
+legend('Real(v)', 'Imag(v)')
+title(strcat('\lambda = ', num2str(Evals{nEI,nIE}(J(i)))))
+
+end
+% 
+% 
+% kEE = ([1:nIE]-1) / stepEE;
+% kIE = ([1:nEI]-1) / stepIE;
+% 
+% for i=1:size(Evals,1)
+% for j=1:size(Evals,2)
+% if numel(Evals{i,j}) > 0
+% l(i,j) = max(real(Evals{i,j}));
+% lim(i,j) = imag(Evals{i,j}(find(real(Evals{i,j}) == max(real(Evals{i,j})),1))); 
+% a(i,j) = Angles{i,j}(find(real(Evals{i,j}) == l(i,j),1));
+% amin(i,j) = min(Angles{i,j});
+% if ~isnan(amin(i,j))
+% l_amin(i,j) = real(Evals{i,j}(find(Angles{i,j} == amin(i,j),1))); 
+% else l_amin(i,j) = nan;
+% end
+% else l(i,j) = nan;
+% end
+% end
+% end
+% 
+% subplot(1,3,1)
+% imagesc(kEE(1:size(l,2)), kIE(1:size(l,1)), (l < 0) + 2 * isnan(l))
+% set(gca, 'ydir', 'normal')
+% set(gca, 'fontsize', 18)
+% xlabel('Tuning of E to E weights (k_{EE})')
+% ylabel('Tuning of E to I weights (k_{IE})')
+% subplot(1,3,2)
+% imagesc(kEE(1:size(l,2)), kIE(1:size(l,1)), l)
+% h = colorbar;
+% set(gca, 'clim', [-0.1,0.1])
+% set(gca, 'fontsize', 18)
+% set(gca, 'ydir', 'normal')
+% xlabel('Tuning of E to E weights (k_{EE})')
+% ylabel('Tuning of E to I weights (k_{IE})')
+% title(h, 'max(real(\lambda))')
+% subplot(1,3,3)
+% imagesc(kEE(1:size(l,2)), kIE(1:size(l,1)),a)
+% h = colorbar;
+% set(gca, 'ydir', 'normal')
+% set(gca, 'fontsize', 18)
+% xlabel('Tuning of E to E weights (k_{EE})')
+% ylabel('Tuning of E to I weights (k_{IE})')
+% title(h, 'angle')
+% 
+% figure 
+% 
+% subplot(1,3,1)
+% imagesc(kEE(1:size(l,2)), kIE(1:size(l,1)), (l < 0) + 2 * isnan(l))
+% set(gca, 'ydir', 'normal')
+% set(gca, 'fontsize', 18)
+% xlabel('Tuning of E to E weights (k_{EE})')
+% ylabel('Tuning of E to I weights (k_{IE})')
+% subplot(1,3,2)
+% imagesc(kEE(1:size(l,2)), kIE(1:size(l,1)), l_amin)
+% h = colorbar;
+% set(gca, 'clim', [-0.1,0.1])
+% set(gca, 'fontsize', 18)
+% set(gca, 'ydir', 'normal')
+% xlabel('Tuning of E to E weights (k_{EE})')
+% ylabel('Tuning of E to I weights (k_{IE})')
+% title(h, 'real(\lambda)')
+% subplot(1,3,3)
+% imagesc(kEE(1:size(l,2)), kIE(1:size(l,1)),amin)
+% h = colorbar;
+% set(gca, 'ydir', 'normal')
+% set(gca, 'fontsize', 18)
+% xlabel('Tuning of E to E weights (k_{EE})')
+% ylabel('Tuning of E to I weights (k_{IE})')
+% title(h, 'min angle')
 
