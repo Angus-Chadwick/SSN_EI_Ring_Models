@@ -5,7 +5,7 @@ clear all
 
 Nloop = 10;  % number of simulations for each parameter set
 Nvals = 11; % 51
-Nt = 5000;  % number of timesteps
+Nt = 1000;  % number of timesteps
 
 % initialise variables
 
@@ -41,10 +41,11 @@ stepIE = 50 /5;
 for nEI = 1:Nvals
     nEI
     for nIE = 1:(5*Nvals)
-        
+    
 q=1;
 
 % create network        
+%% 
 
 kEE = (nIE-1) / stepEE; % E to E concentration
 kIE = (nEI-1) /stepIE; % I to E concentration
@@ -63,46 +64,70 @@ inputs  = create_inputs(theta_s, theta_aE, theta_aI, noise, kE_FF, IE_FF_area, k
 
    
 % %% simulate
-% 
+ 
  NoiseModel = 'Add'; 
 
 [rE, rI]       = SimulateNetwork_mod(network, inputs, Nt, NoiseModel);
 
 StableSim(nEI,nIE) = ~isnan(sum(rE(:)));
 
-if StableSim(nEI,nIE) R0 = [mean(rE(:,(Nt/2):end),2)', mean(rI(:,(Nt/2):end),2)'];else R0 = zeros([1,NE+NI]);end  % set initial guess
+if StableSim(nEI,nIE) R0 = [mean(rE(:,(Nt/2):end),2)', mean(rI(:,(Nt/2):end),2)'];else R0 = FixedPoint{nEI,nIE-1};end  % set initial guess
     
             
             FixedPointFinder;
-            R0 = rmin';
+            R0 = max(0,rmin');
             Phip = diag(2 * R0.^(1/2));
+        
+            JacobianType = 'dual';
+            
+            if strcmp(JacobianType, 'normal')
+            
             Jstar = inv(T) * (Phip * W - eye(NE+NI));
         
+            elseif strcmp(JacobianType, 'dual')
+            
+            Jstar = inv(T) * (W * Phip - eye(NE+NI));
+                
+            end
+                
             DerivativeNorm(nEI,nIE) = norm(inv(T) * ( R0' - max(0, W * R0' + [inputs.IE_FF', inputs.II_FF']').^2));
             FixedPoint{nEI,nIE} = R0;
         
+            
         
         [V,D] = eig(Jstar);
         Evals{nEI,nIE} = diag(D);
-        
+                        
         inputs.noise = 2;
+        Inp = (Phip * [inputs.IE_FF .* (- kE_FF * sin(inputs.theta_pE - theta_s))'; zeros(NI,1)]);
+
+        optvec_method = 'SNR';
+        
+        if strcmp(optvec_method, 'SNR')
         
         CovInp = inv(T) * Phip * diag([inputs.noise * mean(inputs.IE_FF) * ones(NE,1); inputs.noise/2 * mean(inputs.IE_FF) * ones(NI,1)]) * Phip * inv(T);
-        Inp = (Phip * [inputs.IE_FF .* (- kE_FF * sin(inputs.theta_pE - theta_s))'; zeros(NI,1)]);
+            
         optvec =  Inp ./ diag(CovInp); % works only for diagonal input covariance
-        optvec(Inp == 0) = 0;
+        optvec(abs(Inp) < 1e-10) = 0;
         optvec = optvec / norm(optvec);        
+        
+        elseif strcmp(optvec_method, 'Signal')           
+
+            optvec = Inp / norm(Inp);
+            
+        end
         
         Vleft = pinv(V);
         for i=1:size(Vleft,1)
             Vleft(i,:) = Vleft(i,:) ./ norm(  Vleft(i,:));
             angle(i) = -abs(180 /pi * acos(Vleft(i,:) * optvec) - 90) + 90;
         end
-        
-        
+                
         Angles{nEI,nIE} = angle;
         
-
+        MM(p) = min(Angles{nEI,nIE})
+        
+        end
 
     end
 end
@@ -116,8 +141,8 @@ M(j,i) = max(real(Evals{j,i}));
 end
 end
 
-LocalStableFP = (M < 0 & DerivativeNorm < 0.0001);
-LocalUnstableFP = (M > 0 & DerivativeNorm < 0.0001);
+LocalStableFP = (M < 0 & DerivativeNorm < 0.000001);
+LocalUnstableFP = (M > 0 & DerivativeNorm < 0.000001);
 NoFP = DerivativeNorm > 0.01;
 StableSim;
 
@@ -147,6 +172,79 @@ legend('Real(v)', 'Imag(v)')
 title(strcat('\lambda = ', num2str(Evals{nEI,nIE}(J(i)))))
 
 end
+
+for i=1:size(Evals,1)
+for j=1:size(Evals,2)
+P = find(abs(imag(Evals{i,j})) < 10e-10);
+lambda_max(i,j) = max(real(Evals{i,j}(P)));
+ind(i,j) = find(real(Evals{i,j}) == lambda_max(i,j),1);
+angle_max(i,j) = Angles{i,j}(ind(i,j));
+end
+end
+
+for i=1:size(Evals,1)
+for j=1:size(Evals,2)
+P = find(abs(imag(Evals{i,j})) < 10e-10);
+angle_max(i,j) = min(Angles{i,j}(P));
+
+if ~isnan(angle_max(i,j))
+ind(i,j) = find(Angles{i,j} == angle_max(i,j),1);
+lambda_max(i,j) = Evals{i,j}(ind(i,j));
+else lambda_max(i,j) = nan; end
+end
+end
+
+figure
+hold on
+for i=[1,6,11]
+scatter( -1./lambda_max(i,StableSim(i,:)), angle_max(i,StableSim(i,:)))
+end
+
+figure
+subplot(2,2,1)
+set(gca, 'fontsize', 18)
+hold on
+for i=[2,6,11]
+scatter(kEE(StableSim(i,:)),-1./real(lambda_max(i,StableSim(i,:))), 'linewidth', 3)
+xlabel('E to E tuning (k_{EE})')
+ylabel('Longest Time Constant (a.u.)')
+legend('k_{IE} = 0', 'k_{IE} = 0.5', 'k_{IE} = 1.0')
+end
+axis([0,6,0,500])
+subplot(2,2,2)
+set(gca, 'fontsize', 18)
+hold on
+for i=[2,6,11]
+scatter(kEE(StableSim(i,:)),real(angle_max(i,StableSim(i,:))), 'linewidth', 3)
+xlabel('E to E tuning (k_{EE})')
+ylabel('Angle of Eigenvector from Input Signal')
+legend('k_{IE} = 0', 'k_{IE} = 0.5', 'k_{IE} = 1.0')
+end
+axis([0,6,0,90])
+subplot(2,2,3)
+set(gca, 'fontsize', 18)
+hold on
+for i=[6,11,16]
+scatter(kIE(StableSim(:,i)),-1./real(lambda_max(StableSim(:,i),i)), 'linewidth', 3)
+xlabel('E to I tuning (k_{IE})')
+ylabel('Longest Time Constant (a.u.)')
+legend('k_{EE} = 1', 'k_{EE} = 2', 'k_{EE} = 3')
+
+end
+axis([0,1,0,500])
+subplot(2,2,4)
+set(gca, 'fontsize', 18)
+hold on
+for i=[6,11,16]
+scatter(kIE(StableSim(:,i)),real(angle_max(StableSim(:,i),i)), 'linewidth', 3)
+xlabel('E to I tuning (k_{EI})')
+ylabel('Angle of Eigenvector from Input Signal')
+legend('k_{EE} = 1', 'k_{EE} = 2', 'k_{EE} = 3')
+end
+axis([0,1,0,90])
+
+
+
 % 
 % 
 % kEE = ([1:nIE]-1) / stepEE;

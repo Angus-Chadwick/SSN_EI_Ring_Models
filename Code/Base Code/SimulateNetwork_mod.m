@@ -22,7 +22,7 @@ tauE = network.cells.tauE;
 tauI = network.cells.tauI;
 gamma = network.cells.gamma;
 
-if strcmp(NoiseModel, 'Mult');
+if strcmp(NoiseModel, 'Mult')
 
     for t=1:Nt
 

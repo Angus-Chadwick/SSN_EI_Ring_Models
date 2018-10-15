@@ -13,7 +13,7 @@ r0 = R0';
 % minimise function L 
 
 
-Method = 'Newton';
+Method = 'NewtonEfficient';
 
 if strcmp(Method, 'GradDesc')
     epsilon = 0.01;
@@ -21,9 +21,9 @@ if strcmp(Method, 'GradDesc')
 elseif strcmp(Method, 'Newton')
       L = @(r, W, u, gamma) ( (eye(length(r)) - diag(gamma * max(0, W * r + u).^(gamma-1)) * W) \  (r - max(0, W * r + u).^gamma) );  
 epsilon = 1;
-elseif strcmp(Method, 'NewtonSquared')
-          L = @(s, W, u, gamma) ( 2 * (diag(s) - diag(gamma * s .* max(0, W * s.^2 + u).^(gamma-1)) * W) \  (s.^2 - max(0, W * s.^2 + u).^gamma) );  
-epsilon = 1;
+elseif strcmp(Method, 'NewtonEfficient')
+      L = @(r, W, X, gamma) ( (eye(length(r)) - diag(gamma * X.^(1-1/gamma)) * W) \  (r - X) );  % X = max(0, W * r + u).^gamma
+      epsilon = 1;
 end
 
 
@@ -32,18 +32,22 @@ Niter = 100;
 rmin = r0;
 
 loss = 10;
+losstol = 1e-15;
 i=1;
 
 clear Ls
 
-while and(loss > 1e-15, i<Niter)
+
+
+while and(loss > losstol, i<Niter)
     
-    
-    grad = L(rmin, W, u, gamma);
+    X = max(0, W * rmin + u).^gamma;
+    grad = L(rmin, W, X, gamma);
+  %  grad = L(rmin, W, u, gamma);
         
     rmin = rmin - epsilon * grad ;
  %   rmin = max(0,rmin);  % do we need this?
-    loss = norm(inv(T) * ( rmin - max(0, W * rmin + u).^2));  
+    loss = norm(Tinv * ( rmin - max(0, W * rmin + u).^gamma));  
 
  i = i+1;
  
@@ -56,3 +60,6 @@ end
  Niter_conv(nEI,nIE)
 
  
+if StableSim(nEI,nIE) & Ls(i-1) > losstol
+    
+    disp('Failed to Find Fixed Point')
