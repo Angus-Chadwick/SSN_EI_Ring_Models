@@ -1,5 +1,0 @@
-%% Create_Network
-% This file creates a network, including connectivity, feedforward inputs
-% and single-neuon properties
-
-% function parameters: kEI, kIE, J0EI, J0IE, 

@@ -38,7 +38,7 @@ kEI = 0.5;
 
 for nEI = 1:Nvals
     nEI
-    for nIE = 1:Nvals
+    for nIE = (Nvals+1):(2*Nvals)
     
 
     for q=1:Nstim
@@ -138,19 +138,19 @@ iv1 = 1;iv2 = 2;
 
         m0I(iv1,iv2) = nansum(SI0I);
 
-RE_covtot1{nEI,nIE} = RE0_cov(:,:,1);
-RE_covtot2{nEI,nIE} = RE0_cov(:,:,2);
-SItot_E(nEI,nIE) = squeeze(RE0(:,1) - RE0(:,2))' * inv(0.5 * (RE_covtot1{nEI,nIE} + RE_covtot2{nEI,nIE})) * squeeze(RE0(:,1) - RE0(:,2)); 
-SItot_E_ind(nEI,nIE) =  squeeze(RE0(:,1) - RE0(:,2))' * inv(0.5 * diag(diag(RE_covtot1{nEI,nIE} + RE_covtot2{nEI,nIE}))) * squeeze(RE0(:,1) - RE0(:,2)); 
+RE_covtot1 = RE0_cov(:,:,1);
+RE_covtot2 = RE0_cov(:,:,2);
+SItot_E(nEI,nIE) = squeeze(RE0(:,1) - RE0(:,2))' * inv(0.5 * (RE_covtot1 + RE_covtot2)) * squeeze(RE0(:,1) - RE0(:,2)); 
+SItot_E_ind(nEI,nIE) =  squeeze(RE0(:,1) - RE0(:,2))' * inv(0.5 * diag(diag(RE_covtot1 + RE_covtot2))) * squeeze(RE0(:,1) - RE0(:,2)); 
 SI_I(nEI,nIE) = m0I(1,2) / NI;
 SI_E(nEI,nIE) = m0E(1,2) / NE;
 
 
 %% Condition Covariance Matrix
 
-if ~isnan(sum(RE_covtot1{nEI,nIE} + RE_covtot2{nEI,nIE}))
+if ~isnan(sum(RE_covtot1 + RE_covtot2))
 
-    SItot_E_pseudo(nEI,nIE) = squeeze(RE0(:,1) - RE0(:,2))' * pinv(0.5 * (RE_covtot1{nEI,nIE} + RE_covtot2{nEI,nIE})) * squeeze(RE0(:,1) - RE0(:,2)); 
+    SItot_E_pseudo(nEI,nIE) = squeeze(RE0(:,1) - RE0(:,2))' * pinv(0.5 * (RE_covtot1 + RE_covtot2)) * squeeze(RE0(:,1) - RE0(:,2)); 
 
 else
     
@@ -158,7 +158,7 @@ else
     
 end
 
-SItot_E_epsridge(nEI,nIE) = squeeze(RE0(:,1) - RE0(:,2))' * inv(0.5 * (RE_covtot1{nEI,nIE} + RE_covtot2{nEI,nIE} + 2 * eps * eye(1000))) * squeeze(RE0(:,1) - RE0(:,2)); 
+SItot_E_epsridge(nEI,nIE) = squeeze(RE0(:,1) - RE0(:,2))' * inv(0.5 * (RE_covtot1 + RE_covtot2 + 2 * eps * eye(1000))) * squeeze(RE0(:,1) - RE0(:,2)); 
 
 
     
