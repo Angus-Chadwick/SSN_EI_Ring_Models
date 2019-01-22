@@ -75,7 +75,6 @@ plot(theta_pI(1:10:end) * 180/pi, RI0_vert{2}(1:10:end), 'color', Xr2, 'linestyl
 plot(theta_pI * 180/pi, RI0_vert{3}, 'color', 'r', 'linewidth', 3)
 plot(theta_pI(1:10:end) * 180/pi, RI0_vert{3}(1:10:end), 'color', 'r', 'linestyle', 'none', 'marker', 'x', 'markersize', 15, 'linewidth', 3)
 
-
 plot(theta_pI * 180/pi, RI0_ang{1}, 'color', Xb, 'linewidth', 3)
 plot(theta_pI(1:10:end) * 180/pi, RI0_ang{1}(1:10:end), 'color', Xb, 'linestyle', 'none', 'marker', '*', 'markersize', 15, 'linewidth', 3)
 

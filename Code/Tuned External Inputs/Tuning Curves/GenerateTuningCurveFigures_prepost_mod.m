@@ -55,8 +55,8 @@ kEI = 0.5;
 
 elseif m==2 % post
 
-kEE = 2;    
-kIE = 0.3; 
+kEE = 3;    
+kIE = 0.4; 
 kEI = 0.5;
 
 end
@@ -160,10 +160,10 @@ iv1 = 1; iv2 = 2;
 
         % compute network jacobian 
         
-%         inputs_nonoise = inputs;
-%         inputs_nonoise.noise = 0;
-%         [rE, rI]       = SimulateNetwork_mod(network, inputs_nonoise, Nt, NoiseModel);
-        [rE, rI]       = SimulateNetwork_mod(network, inputs, Nt, NoiseModel);
+         inputs_nonoise = inputs;
+         inputs_nonoise.noise = 0;
+         [rE, rI]       = SimulateNetwork_mod(network, inputs_nonoise, Nt, NoiseModel);
+        %[rE, rI]       = SimulateNetwork_mod(network, inputs, Nt, NoiseModel);
 
         
         W = [network.connectivity.JEE, -network.connectivity.JEI; network.connectivity.JIE, -network.connectivity.JII];
@@ -171,6 +171,23 @@ iv1 = 1; iv2 = 2;
         T = diag([network.cells.tauE * ones(1000,1); network.cells.tauI * ones(200,1)]);
         Jstar{m} = inv(T) * (Phip * W - eye(1200));
         [V{m},D{m}] = eig(Jstar{m});
+        inputs1  = create_inputs(theta_s, theta_aE, theta_aI, noise, kE_FF, IE_FF_area, kE_TD, IE_TD_area, kI_TD, II_TD_area, network);
+        inputs2  = create_inputs(theta_s * 1.01, theta_aE, theta_aI, noise, kE_FF, IE_FF_area, kE_TD, IE_TD_area, kI_TD, II_TD_area, network);
+
+        u{m} = inv(T) * Phip * [inputs1.IE_FF - inputs2.IE_FF; inputs1.II_FF - inputs2.II_FF];
+        Vinv{m} = inv(V{m});
+        
+        tau{m} = -1./diag(D{m});
+        I{m} = find(imag(tau{m}) == 0);
+        
+        
+            for j=1:length(I{m})
+                Vinv{m}(I{m}(j),:) = Vinv{m}(I{m}(j),:) ./ norm(Vinv{m}(I{m}(j),:));
+            end
+            Sigma_eta = diag([ones([1000,1]); 0.5 * ones([200,1])]);
+            optvec{m} = inv(inv(T) * Phip) * inv(Sigma_eta) * u{m};
+        scatter(tau{m}(I{m}), abs(Vinv{m}(I{m},:) * optvec{m}) ./ norm(optvec{m}));
+        hold on
 end
 
 
