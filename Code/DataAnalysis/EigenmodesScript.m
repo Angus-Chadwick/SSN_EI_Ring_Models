@@ -3,10 +3,10 @@ if task='learning'
 
 elseif task='switching'
     
-xpre = xrel;
-xpost = xirrel;
-residualpre = residualrel;
-residualpost = residualirrel;
+xpre = xirrel;
+xpost = xrel;
+residualpre = residualirrel;
+residualpost = residualrel;
 
 end
     
@@ -14,6 +14,8 @@ cond = 'differential'
 
 for rix=1:length(RXS)
 
+    % compute signal vectors
+    
           MeanVpre = mean(xpre{RXS(rix)}(1:length(CELLLAB_ALL{RXS(rix)}), (length(CELLLAB_ALL{RXS(rix)}) + 9):(length(CELLLAB_ALL{RXS(rix)}) + 17)), 2);
           MeanApre = mean(xpre{RXS(rix)}(1:length(CELLLAB_ALL{RXS(rix)}), (length(CELLLAB_ALL{RXS(rix)}) + 9 + 17):(length(CELLLAB_ALL{RXS(rix)}) + 17 + 17)), 2);
 
@@ -36,7 +38,7 @@ for rix=1:length(RXS)
             dIn_pre{rix} = MeanApre;
             dIn_post{rix} = MeanApost;
             
-            
+            sub
           elseif strmatch(cond, 'Shuffled')
 
             dIn_pre{rix} = MeanVpre - MeanApre;
@@ -47,6 +49,8 @@ for rix=1:length(RXS)
             
           end
     
+          % compute SNR vector and information
+
           SNRvec = 1;
           if SNRvec
           
@@ -55,17 +59,22 @@ for rix=1:length(RXS)
             Covresinv_pre{rix} = inv(Covres_pre{rix});
             Covresinv_post{rix} = inv(Covres_post{rix});
 
+            InputInformation_pre(rix) = dIn_pre{rix}' * Covresinv_pre{rix} * dIn_pre{rix};
+            InputInformation_post(rix) = dIn_post{rix}' * Covresinv_post{rix} * dIn_post{rix};
+
             dIn_pre{rix} = Covresinv_pre{rix} * dIn_pre{rix};
             dIn_post{rix} = Covresinv_post{rix} * dIn_post{rix};
             
           end
     
+          % compute eigendecomposition
+          
     Apre{rix} = xpre{RXS(rix)}(:, 1:size(xpre{RXS(rix)},1));
     Apost{rix} = xpost{RXS(rix)}(:, 1:size(xpost{RXS(rix)},1));
     
     [Vpre{rix}, Dpre{rix}] = eig(Apre{rix});
     [Vpost{rix}, Dpost{rix}] = eig(Apost{rix});
-    
+        
     Vinv_pre{rix} = inv(Vpre{rix});
     Vinv_post{rix} = inv(Vpost{rix});
     
@@ -76,6 +85,7 @@ for rix=1:length(RXS)
         
     end
    
+    % subselect real eigenmodes
     
     I = find(imag(diag(Dpre{rix})) == 0);
     Xpre{rix} = abs(Vinv_pre{rix}(I,:) * dIn_pre{rix}) / norm(dIn_pre{rix});
@@ -86,15 +96,63 @@ for rix=1:length(RXS)
     Xpost{rix} = abs(Vinv_post{rix}(I,:) * dIn_post{rix}) / norm(dIn_post{rix});
     D = diag(Dpost{rix});
     Ypost{rix} = D(I);
-    
-end
+  
+   % plot significant eigenvectors vs input SNR
+%     
+%     l = and(and(0 < Ypost{rix} + 1, Ypost{rix} + 1 < 0.99),and(and(-125./log(Ypost{rix}+1) > 800, -125./log(Ypost{rix}+1) < 1000), and(acos(Xpost{rix}) * 180 / pi > 82, acos(Xpost{rix}) * 180 / pi < 86)));
+%   
+%     
+%     figure
+%     if sum(l) > 0
+%         p=0;
+%         s=find(l);
+%     for t=1:length(s)
+%         q = (s(t));
+%         p=p+1;
+%         subplot(1,sum(l),p)
+%             hold on
+% 
+% 
+%             
+%             [c1{rix}(t), pval{rix}(t)] = corr(dIn_post{rix}(CELLLAB_ALL{RXS(rix)}==1),real(Vinv_pre{rix}(l(q),CELLLAB_ALL{RXS(rix)}==1))');
+%             if c1{rix}(t) > 0
+%                 
+%             c3{rix}(t) = corr(dIn_post{rix}(CELLLAB_ALL{RXS(rix)}==3),real(Vinv_pre{rix}(l(q),CELLLAB_ALL{RXS(rix)}==3))');
+%             else
+%                 c1{rix}(t) = -c1{rix}(t);
+%                 c3{rix}(t) = -corr(dIn_post{rix}(CELLLAB_ALL{RXS(rix)}==3),real(Vinv_pre{rix}(l(q),CELLLAB_ALL{RXS(rix)}==3))');
+%             end
+%            
+%             scatter(dIn_post{rix}(CELLLAB_ALL{RXS(rix)}==1), real(Vinv_pre{rix}(l(q),CELLLAB_ALL{RXS(rix)}==1)), 'r')
+%             scatter(dIn_post{rix}(CELLLAB_ALL{RXS(rix)}==3), real(Vinv_pre{rix}(l(q),CELLLAB_ALL{RXS(rix)}==3)), 'g')
+%             scatter(dIn_post{rix}(CELLLAB_ALL{RXS(rix)}==4), real(Vinv_pre{rix}(l(q),CELLLAB_ALL{RXS(rix)}==4)), 'b')
+%             scatter(dIn_post{rix}(CELLLAB_ALL{RXS(rix)}==5), real(Vinv_pre{rix}(l(q),CELLLAB_ALL{RXS(rix)}==5)), 'k')
+% 
+%     end
+%     end
+%     
+ end
 
+
+plot_inputinf = 1;
+if plot_inputinf
+scatter(InputInformation_pre, InputInformation_post, 100, 'linewidth', 3)
+hold on
+plot([0,100], [0,100], 'linewidth', 3)
+set(gca, 'fontsize', 18)
+xlabel('Input Information (pre)')
+ylabel('Input Information (post)')
+title('Change in Input Information with Learning')
+p=signrank(InputInformation_pre, InputInformation_post);
+legend(strcat('p=', num2str(p)))
+box on
+end
 combine_animals = 1;
 
 rix = 2
 
 if combine_animals
-
+    
 % combine animals
 
 Xpre_tot = vertcat(Xpre{:});
@@ -196,9 +254,16 @@ xlabel('Time Constant (ms)')
 ylabel('Angle from Optimal Input SNR')
 
 if plotrawdata
-
-    scatter(taupre_tot, 180 / pi * thetapre_tot(Ipre), 100, '+', 'markeredgecolor', 'k')
-    scatter(taupost_tot, 180 / pi * thetapost_tot(Ipost), 100, '+', 'markeredgecolor', 'b')    
+hold on
+    scatter(taupre_tot, 180 / pi * thetapre_tot(Ipre), 100, 'x', 'markeredgecolor', 'k', 'linewidth', 3)
+    scatter(taupost_tot, 180 / pi * thetapost_tot(Ipost), 100, 'o', 'markeredgecolor', 'b', 'linewidth', 3)       
+    
+    legend('Pre-Learning' ,'Post-Learning')
+    box on
+    xlabel('Time constant (ms)')
+    ylabel('Angle from optimal input SNR (deg)')
+    title('Dynamical Modes')
+    set(gca, 'fontsize', 24)
     
 end
 
@@ -218,37 +283,100 @@ axis([75.5,90,0,1250])
 
 clear p_pre_smx p_post_smx p_pre_smxy p_post_smxy
 
+
+
 edges{1} = 0:10:1750;
 edges{2} = (70:0.1:90) * pi / 180;
-p_pre = hist3([taupre_tot, thetapre_tot(Ipre)], edges);
-p_post = hist3([taupost_tot, thetapost_tot(Ipost)], edges);
 
 sigma_t = 100;
 sigma_theta = 1 * pi / 180;
 
-for i=1:length(edges{1})
-    for j=1:length(edges{2})
-p_pre_smxy(i,j) = sum(exp(-(edges{1}(i) - taupre_tot).^2/(2 * sigma_t^2) - (edges{2}(j) - thetapre_tot(Ipre)).^2 / (2*sigma_theta^2)));
-p_post_smxy(i,j) = sum(exp(-(edges{1}(i) - taupost_tot).^2/(2 * sigma_t^2) - (edges{2}(j) - thetapost_tot(Ipost)).^2 / (2*sigma_theta^2)));
+s1=(exp(-(bsxfun(@minus, edges{1}, taupre_tot)).^2/(2 * sigma_t^2)));
+s2=(exp(-(bsxfun(@minus, edges{2}, thetapre_tot(Ipre)).^2)/(2*sigma_theta^2)));
+s3=s1' * s2;
+p_pre_smxy = s3;
+s1=(exp(-(bsxfun(@minus, edges{1}, taupost_tot)).^2/(2 * sigma_t^2)));
+s2=(exp(-(bsxfun(@minus, edges{2}, thetapost_tot(Ipost)).^2)/(2*sigma_theta^2)));
+s3=s1' * s2;
+p_post_smxy = s3;
 
-    end
-end
+normtype = 'shuffstd'
+
+if strcmp(normtype, 'unnormalised')
 
 
 figure 
 cmax = 0.05;
 subplot(3,1,1)
 imagesc(edges{1}, edges{2} * 180 / pi, p_pre_smxy')
-h = 'colorbar';
+h = colorbar;
 %caxis([0,cmax])
 axis([0,1250,76,90])
 subplot(3,1,2)
 imagesc(edges{1}, edges{2} * 180 / pi,p_post_smxy')
-h = 'colorbar';
+h = colorbar;
 %caxis([0,cmax])
 axis([0,1250,76,90])
 subplot(3,1,3)
-imagesc(edges{1}, edges{2} * 180 / pi,p_post_smxy' - p_pre_smxy')
-h = 'colorbar';
+imagesc(edges{1}, edges{2} * 180 / pi,(p_post_smxy' - p_pre_smxy'))
+h = colorbar;
 %caxis([-cmax,cmax])
 axis([0,1250,76,90])
+
+elseif strcmp(normtype, 'shuffstd')
+  
+    prc = 2.5;
+    
+for i=1:length(edges{1})
+for j=1:length(edges{2})
+normvar_diff(i,j) = std(p_post_smxy_shuff(i,j,:) - p_pre_smxy_shuff(i,j,:));
+normvar_pre(i,j) = std(p_pre_smxy_shuff(i,j,:));
+normvar_post(i,j) = std(p_post_smxy_shuff(i,j,:));
+p_top_prc(i,j) = prctile(p_post_smxy_shuff(i,j,:) - p_pre_smxy_shuff(i,j,:),100 - prc);
+p_bottom_prc(i,j) = prctile(p_post_smxy_shuff(i,j,:) - p_pre_smxy_shuff(i,j,:),prc);
+end
+end
+
+
+
+cmax1 = 10;
+cmax2 = 3;
+
+figure 
+subplot(3,1,1)
+imagesc(edges{1}, edges{2} * 180 / pi, p_pre_smxy' ./ normvar_pre')
+set(gca, 'ydir', 'normal')
+set(gca, 'fontsize', 18)
+xlabel('Time constant (ms)')
+ylabel('Angle from optimal input SNR (deg)')
+h = colorbar;
+title(h, 'Normalized count')
+caxis([0,cmax1])
+axis([0,1250,76,90])
+subplot(3,1,2)
+imagesc(edges{1}, edges{2} * 180 / pi,p_post_smxy' ./ normvar_post')
+set(gca, 'ydir', 'normal')
+set(gca, 'fontsize', 18)
+xlabel('Time constant (ms)')
+ylabel('Angle from optimal input SNR (deg)')
+h = colorbar;
+title(h, 'Normalized count')
+caxis([0,cmax1])
+axis([0,1250,76,90])
+subplot(3,1,3)
+imagesc(edges{1}, edges{2} * 180 / pi,(p_post_smxy' - p_pre_smxy') ./ normvar_diff')
+set(gca, 'ydir', 'normal')
+set(gca, 'fontsize', 18)
+xlabel('Time constant (ms)')
+ylabel('Angle from optimal input SNR (deg)')
+h = colorbar;
+title(h, 'Normalized count')
+caxis([-cmax2,cmax2])
+axis([0,1250,76,90])
+hold on
+X1 = (p_post_smxy' - p_pre_smxy' > p_top_prc');
+X2 = (p_post_smxy' - p_pre_smxy' < p_bottom_prc');
+contour(edges{1},edges{2} * 180/pi,X1, [0,1], 'color', [0.5,0.5,0.5], 'linewidth', 4, 'linestyle', '--');
+contour(edges{1},edges{2} * 180/pi,X2, [0,1], 'k', 'linewidth', 4, 'linestyle', '--');
+
+end

@@ -600,10 +600,13 @@ clearvars -except thetabin_pre_shuff thetabin_post_shuff taubin_pre_shuff taubin
 
 end
 
+edges{1} = 0:10:1750;
+edges{2} = (70:0.1:90) * pi / 180;
+
 for i=1:length(edges{1})
 for j=1:length(edges{2})
-p_95prc(i,j) = prctile(p_post_smxy_shuff(i,j,:),97.5);
-p_5prc(i,j) = prctile(p_post_smxy_shuff(i,j,:),2.5);
+p_95prc(i,j) = prctile(p_post_smxy_shuff(i,j,:) - p_pre_smxy_shuff(i,j,:),97.5);
+p_5prc(i,j) = prctile(p_post_smxy_shuff(i,j,:) - p_pre_smxy_shuff(i,j,:),2.5);
 end
 end
 
