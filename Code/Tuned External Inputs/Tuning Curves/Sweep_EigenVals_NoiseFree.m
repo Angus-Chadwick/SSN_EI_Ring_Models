@@ -3,14 +3,13 @@ clear all
 
 % simulation parameters
 
-Nloop = 10;  % number of simulations for each parameter set
 Nvals = 11; % 51
 Nt = 1000;  % number of timesteps
 
 % initialise variables
 
 RE_covtot = cell(Nvals);
-RE = cell([Nloop, 1]);
+RE = cell(1);
 RI = RE;
 RE_std = RE;
 RI_std = RI;
@@ -40,7 +39,7 @@ stepIE = 50 /5;
 
 for nEI = 1:Nvals
     nEI
-    for nIE = 1:(5*Nvals)
+    for nIE = 1:(2*Nvals)
     
 q=1;
 
@@ -82,11 +81,11 @@ if StableSim(nEI,nIE) R0 = [mean(rE(:,(Nt/2):end),2)', mean(rI(:,(Nt/2):end),2)'
             
             if strcmp(JacobianType, 'normal')
             
-            Jstar = inv(T) * (Phip * W - eye(NE+NI));
+            Jstar = inv(T) * (Phip * W - eye(NE+NI)); % jacobian of output system, inv(T) is in front
         
-            elseif strcmp(JacobianType, 'dual')
+            elseif strcmp(JacobianType, 'dual') 
             
-            Jstar = inv(T) * (W * Phip - eye(NE+NI));
+            Jstar = (W * Phip - eye(NE+NI)) * inv(T); % jacobian of input system, inv(T) is at the back
                 
             end
                 
@@ -101,9 +100,11 @@ if StableSim(nEI,nIE) R0 = [mean(rE(:,(Nt/2):end),2)', mean(rI(:,(Nt/2):end),2)'
          % to check scaling with time constant and calculation of left dual
          % eigenvector
         
-        [V,D] = eig(Jstar);
+        [Vleft,D] = eig(Jstar');  % try computing left eigenvectors and eigenvalues simply by taking transpose of matrix, no need to invert
+        Vleft = Vleft';
         Evals{nEI,nIE} = diag(D);
-                        
+        
+        
         inputs.noise = 2;
         Inp = ([inputs.IE_FF .* (- kE_FF * sin(inputs.theta_pE - theta_s))'; zeros(NI,1)]);
 
@@ -111,7 +112,7 @@ if StableSim(nEI,nIE) R0 = [mean(rE(:,(Nt/2):end),2)', mean(rI(:,(Nt/2):end),2)'
         
         if strcmp(optvec_method, 'SNRdual')
         
-        CovInp = inv(T) * diag([inputs.noise * mean(inputs.IE_FF) * ones(NE,1); inputs.noise/2 * mean(inputs.IE_FF) * ones(NI,1)]) * inv(T);
+        CovInp =  diag([inputs.noise * mean(inputs.IE_FF) * ones(NE,1); inputs.noise/2 * mean(inputs.IE_FF) * ones(NI,1)]); % removed inv(T) from this expression as it is in input basis
             
         optvec =  Inp ./ diag(CovInp); % works only for diagonal input covariance
         optvec(abs(Inp) < 1e-10) = 0;
@@ -131,13 +132,18 @@ if StableSim(nEI,nIE) R0 = [mean(rE(:,(Nt/2):end),2)', mean(rI(:,(Nt/2):end),2)'
             optvec = Inp / norm(Inp);
             
         end
-        
-        Vleft = pinv(V);
-        for i=1:size(Vleft,1)
-            Vleft(i,:) = Vleft(i,:) ./ norm(  Vleft(i,:));
-            angle(i) = -abs(180 /pi * acos(Vleft(i,:) * optvec) - 90) + 90;
-        end
-                
+%         
+%         Vleft = pinv(V);
+%         for i=1:size(Vleft,1)
+%             Vleft(i,:) = Vleft(i,:) ./ norm(  Vleft(i,:));
+%             angle(i) = -abs(180 /pi * acos(Vleft(i,:) * optvec) - 90) + 90;
+%         end
+
+         for i=1:size(Vleft,1)
+             Vleft(i,:) = Vleft(i,:) ./ norm(  Vleft(i,:));
+             angle(i) = -abs(180 /pi * acos(Vleft(i,:) * optvec) - 90) + 90;
+         end     
+
         Angles{nEI,nIE} = angle;
         
         
@@ -195,18 +201,18 @@ ind(i,j) = find(real(Evals{i,j}) == lambda_max(i,j),1);
 angle_max(i,j) = Angles{i,j}(ind(i,j));
 end
 end
-
-for i=1:size(Evals,1)
-for j=1:size(Evals,2)
-P = find(abs(imag(Evals{i,j})) < 10e-10);
-angle_max(i,j) = min(Angles{i,j}(P));
-
-if ~isnan(angle_max(i,j))
-ind(i,j) = find(Angles{i,j} == angle_max(i,j),1);
-lambda_max(i,j) = Evals{i,j}(ind(i,j));
-else lambda_max(i,j) = nan; end
-end
-end
+% 
+% for i=1:size(Evals,1)
+% for j=1:size(Evals,2)
+% P = find(abs(imag(Evals{i,j})) < 10e-10);
+% angle_max(i,j) = min(Angles{i,j}(P));
+% 
+% if ~isnan(angle_max(i,j))
+% ind(i,j) = find(Angles{i,j} == angle_max(i,j),1);
+% lambda_max(i,j) = Evals{i,j}(ind(i,j));
+% else lambda_max(i,j) = nan; end
+% end
+% end
 
 figure
 subplot(2,2,1)
