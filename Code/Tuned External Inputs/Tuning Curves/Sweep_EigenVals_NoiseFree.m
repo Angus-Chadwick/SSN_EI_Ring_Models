@@ -94,23 +94,38 @@ if StableSim(nEI,nIE) R0 = [mean(rE(:,(Nt/2):end),2)', mean(rI(:,(Nt/2):end),2)'
             FixedPoint{nEI,nIE} = R0;
         
             
+            
+         % NOTE: VERY CAREFULLY CHECK EQUATIONS FOR J, optvec, and Vleft,
+         % as T enters differently into different eigenvectors, and have
+         % dual basis too...If only E cells count, should be ok, but need
+         % to check scaling with time constant and calculation of left dual
+         % eigenvector
         
         [V,D] = eig(Jstar);
         Evals{nEI,nIE} = diag(D);
                         
         inputs.noise = 2;
-        Inp = (Phip * [inputs.IE_FF .* (- kE_FF * sin(inputs.theta_pE - theta_s))'; zeros(NI,1)]);
+        Inp = ([inputs.IE_FF .* (- kE_FF * sin(inputs.theta_pE - theta_s))'; zeros(NI,1)]);
 
-        optvec_method = 'SNR';
+        optvec_method = 'SNRdual';
         
-        if strcmp(optvec_method, 'SNR')
+        if strcmp(optvec_method, 'SNRdual')
         
-        CovInp = inv(T) * Phip * diag([inputs.noise * mean(inputs.IE_FF) * ones(NE,1); inputs.noise/2 * mean(inputs.IE_FF) * ones(NI,1)]) * Phip * inv(T);
+        CovInp = inv(T) * diag([inputs.noise * mean(inputs.IE_FF) * ones(NE,1); inputs.noise/2 * mean(inputs.IE_FF) * ones(NI,1)]) * inv(T);
             
         optvec =  Inp ./ diag(CovInp); % works only for diagonal input covariance
         optvec(abs(Inp) < 1e-10) = 0;
         optvec = optvec / norm(optvec);        
         
+        elseif strcmp(optvec_method, 'SNRnormal')
+        
+                Inp = Phip * ([inputs.IE_FF .* (- kE_FF * sin(inputs.theta_pE - theta_s))'; zeros(NI,1)]);
+                CovInp = inv(T) * Phip *  diag([inputs.noise * mean(inputs.IE_FF) * ones(NE,1); inputs.noise/2 * mean(inputs.IE_FF) * ones(NI,1)]) * inv(T) * Phip;
+
+                        optvec =  Inp ./ diag(CovInp); % works only for diagonal input covariance
+               optvec(abs(Inp) < 1e-10) = 0;
+               optvec = optvec / norm(optvec);    
+            
         elseif strcmp(optvec_method, 'Signal')           
 
             optvec = Inp / norm(Inp);
@@ -125,9 +140,8 @@ if StableSim(nEI,nIE) R0 = [mean(rE(:,(Nt/2):end),2)', mean(rI(:,(Nt/2):end),2)'
                 
         Angles{nEI,nIE} = angle;
         
-        MM(p) = min(Angles{nEI,nIE})
         
-        end
+        
 
     end
 end
@@ -192,12 +206,6 @@ ind(i,j) = find(Angles{i,j} == angle_max(i,j),1);
 lambda_max(i,j) = Evals{i,j}(ind(i,j));
 else lambda_max(i,j) = nan; end
 end
-end
-
-figure
-hold on
-for i=[1,6,11]
-scatter( -1./lambda_max(i,StableSim(i,:)), angle_max(i,StableSim(i,:)))
 end
 
 figure

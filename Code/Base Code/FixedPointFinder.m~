@@ -13,7 +13,7 @@ r0 = R0';
 % minimise function L 
 
 
-Method = 'NewtonEfficient';
+Method = 'NewtonEfficient_T';
 
 if strcmp(Method, 'GradDesc')
     epsilon = 0.01;
@@ -21,6 +21,9 @@ if strcmp(Method, 'GradDesc')
 elseif strcmp(Method, 'Newton')
       L = @(r, W, u, gamma) ( (eye(length(r)) - diag(gamma * max(0, W * r + u).^(gamma-1)) * W) \  (r - max(0, W * r + u).^gamma) );  
 epsilon = 1;
+elseif strcmp(Method, 'NewtonEfficient')
+      L = @(r, W, X, gamma) ( (eye(length(r)) - diag(gamma * X.^(1-1/gamma)) * W) \  (r - X) );  % X = max(0, W * r + u).^gamma
+      epsilon = 1;
 elseif strcmp(Method, 'NewtonEfficient')
       L = @(r, W, X, gamma) ( (eye(length(r)) - diag(gamma * X.^(1-1/gamma)) * W) \  (r - X) );  % X = max(0, W * r + u).^gamma
       epsilon = 1;
@@ -57,9 +60,9 @@ end
 
 
  Niter_conv(nEI,nIE) = i;
- Niter_conv(nEI,nIE)
-
  
 if StableSim(nEI,nIE) & Ls(i-1) > losstol
     
     disp('Failed to Find Fixed Point')
+    
+end

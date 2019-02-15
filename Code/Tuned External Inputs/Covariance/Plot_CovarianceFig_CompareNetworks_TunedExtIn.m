@@ -168,7 +168,7 @@ ROOT     = '/mnt/data/angusc/Data/Tuned External Inputs/Covariance/';
 X =        'CovarianceData_IsoI_TunedExtIn_Batch1.mat';
 load([ROOT, X])
 
-X =        'CovarianceData_IsoI_TunedExtIn_PooledCovsandmeans.mat'; % REDO WITH FULL RE0 TOO
+X =        'CovarianceData_IsoI_TunedExtIn_PooledCovsandmeans.mat'; 
 load([ROOT, X])
 
 RE_covtot1 = RE_covtot1(1:1000,1:1000);
