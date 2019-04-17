@@ -23,31 +23,31 @@ Nstim = length(stimvals);
 theta_aE = 0;
 theta_aI = 0;
 noise = 0;
-kE_FF = 0.5;
+kE_FF = 0.5; % standard value = 0.5
 kE_TD = 0;
 kI_TD = 0;
 IE_FF_area = 0.005 * 100;
 IE_TD_area = 0.0;
 II_TD_area = 0.0;
-JEI_mean = 0.04;
+JEI_mean = 0.04;  % standard values
 JIE_mean = 0.04;
 
-kEI = 0.5;
+kEI = 0.4; % standard value 0.5 
 
-stepEE = 25 /5  ;
+stepEE = 25 /5;
 stepIE = 50 /5;
 
-for nEI = 1:Nvals
+for nEI = 1:(2*Nvals)
     nEI
     for nIE = 1:(2*Nvals)
-    
+   
 q=1;
 
 % create network        
 %% 
 
 kEE = (nIE-1) / stepEE; % E to E concentration
-kIE = (nEI-1) /stepIE; % I to E concentration
+kIE = (nEI-1) / stepIE; % I to E concentration
 
 NE = 1000;
 network = create_network_varyEE(kEI,kIE,JEI_mean,JIE_mean, 15/NE * besseli(0,1), kEE);
@@ -58,6 +58,9 @@ NI = network.cells.NI;
 % create inputs
 
 theta_s = stimvals(q);
+theta_aI = theta_s;
+%kI_TD = kE_FF;
+%II_TD_area = 0.1 * IE_FF_area;
 
 inputs  = create_inputs(theta_s, theta_aE, theta_aI, noise, kE_FF, IE_FF_area, kE_TD, IE_TD_area, kI_TD, II_TD_area, network);
 
@@ -102,8 +105,7 @@ if StableSim(nEI,nIE) R0 = [mean(rE(:,(Nt/2):end),2)', mean(rI(:,(Nt/2):end),2)'
         
         [Vleft,D] = eig(Jstar');  % try computing left eigenvectors and eigenvalues simply by taking transpose of matrix, no need to invert
         Vleft = Vleft';
-        Evals{nEI,nIE} = diag(D);
-        
+        Evals{nEI,nIE} = diag(D);        
         
         inputs.noise = 2;
         Inp = ([inputs.IE_FF .* (- kE_FF * sin(inputs.theta_pE - theta_s))'; zeros(NI,1)]);
@@ -123,7 +125,7 @@ if StableSim(nEI,nIE) R0 = [mean(rE(:,(Nt/2):end),2)', mean(rI(:,(Nt/2):end),2)'
                 Inp = Phip * ([inputs.IE_FF .* (- kE_FF * sin(inputs.theta_pE - theta_s))'; zeros(NI,1)]);
                 CovInp = inv(T) * Phip *  diag([inputs.noise * mean(inputs.IE_FF) * ones(NE,1); inputs.noise/2 * mean(inputs.IE_FF) * ones(NI,1)]) * inv(T) * Phip;
 
-                        optvec =  Inp ./ diag(CovInp); % works only for diagonal input covariance
+               optvec =  Inp ./ diag(CovInp); % works only for diagonal input covariance
                optvec(abs(Inp) < 1e-10) = 0;
                optvec = optvec / norm(optvec);    
             
@@ -132,7 +134,7 @@ if StableSim(nEI,nIE) R0 = [mean(rE(:,(Nt/2):end),2)', mean(rI(:,(Nt/2):end),2)'
             optvec = Inp / norm(Inp);
             
         end
-%         
+         
 %         Vleft = pinv(V);
 %         for i=1:size(Vleft,1)
 %             Vleft(i,:) = Vleft(i,:) ./ norm(  Vleft(i,:));
@@ -140,15 +142,23 @@ if StableSim(nEI,nIE) R0 = [mean(rE(:,(Nt/2):end),2)', mean(rI(:,(Nt/2):end),2)'
 %         end
 
          for i=1:size(Vleft,1)
-             Vleft(i,:) = Vleft(i,:) ./ norm(  Vleft(i,:));
-             angle(i) = -abs(180 /pi * acos(Vleft(i,:) * optvec) - 90) + 90;
+             Vleft(i,:) = Vleft(i,:);
+             angle(i) = -abs(180 /pi * acos(Vleft(i,:)/norm(Vleft(i,1:1000)) * optvec) - 90) + 90;
          end     
+%NOTE: taking angle of normed vectors doesn't make sense. The real maths
+%tell us we want the dot product of un-normed vectors (Vleft can be
+%normed). We can rectify this by simply taking the E part of the e-vec.
 
         Angles{nEI,nIE} = angle;
         
         
+        % compute SNR of best-aligned mode
+       % p = find(angle == min(angle),1);
+        p = find(max(real(diag(D))),1);
+        SNRmode{nEI,nIE} = (Vleft * Inp).^2 ./ diag(Vleft * CovInp * Vleft');
+        taumode{nEI,nIE} = -1./real(diag(D));        
         
-
+        
     end
 end
 
@@ -169,29 +179,33 @@ StableSim;
 imagesc(kEE,kIE,LocalStableFP + 2 * LocalUnstableFP + 3 * NoFP)
 
 % 
+% % 
+% [I,J] = sort(real(Evals{nEI,nIE}), 'descend');
+% for i=1:3
+%         
+% subplot(3,2,2*i-1)
+% hold on
+% plot(real(V(:,J(i))), 'linewidth', 3)
+% plot(imag(V(:,J(i))), 'linewidth', 3)
+% xlabel('Cell id')
+% ylabel('Right Eigenvector Element')
+% legend('Real(v)', 'Imag(v)')
+% title(strcat('\lambda = ', num2str(Evals{nEI,nIE}(J(i)))))
 % 
-[I,J] = sort(real(Evals{nEI,nIE}), 'descend');
-for i=1:3
-        
-subplot(3,2,2*i-1)
-hold on
-plot(real(V(:,J(i))), 'linewidth', 3)
-plot(imag(V(:,J(i))), 'linewidth', 3)
-xlabel('Cell id')
-ylabel('Right Eigenvector Element')
-legend('Real(v)', 'Imag(v)')
-title(strcat('\lambda = ', num2str(Evals{nEI,nIE}(J(i)))))
+% subplot(3,2,2*i)
+% hold onsub
+% plot(real(Vleft(J(i),:)), 'linewidth', 3)
+% plot(imag(Vleft(J(i),:)), 'linewidth', 3)
+% xlabel('Cell id')
+% ylabel('Left Eigenvector Element')
+% legend('Real(v)', 'Imag(v)')
+% title(strcat('\lambda = ', num2str(Evals{nEI,nIE}(J(i)))))
+% 
+% end
 
-subplot(3,2,2*i)
-hold on
-plot(real(Vleft(J(i),:)), 'linewidth', 3)
-plot(imag(Vleft(J(i),:)), 'linewidth', 3)
-xlabel('Cell id')
-ylabel('Left Eigenvector Element')
-legend('Real(v)', 'Imag(v)')
-title(strcat('\lambda = ', num2str(Evals{nEI,nIE}(J(i)))))
+modechoice = 'SNR';
 
-end
+if strcmp(modechoice, 'timeconstant')
 
 for i=1:size(Evals,1)
 for j=1:size(Evals,2)
@@ -201,18 +215,42 @@ ind(i,j) = find(real(Evals{i,j}) == lambda_max(i,j),1);
 angle_max(i,j) = Angles{i,j}(ind(i,j));
 end
 end
-% 
-% for i=1:size(Evals,1)
-% for j=1:size(Evals,2)
-% P = find(abs(imag(Evals{i,j})) < 10e-10);
-% angle_max(i,j) = min(Angles{i,j}(P));
-% 
-% if ~isnan(angle_max(i,j))
-% ind(i,j) = find(Angles{i,j} == angle_max(i,j),1);
-% lambda_max(i,j) = Evals{i,j}(ind(i,j));
-% else lambda_max(i,j) = nan; end
-% end
-% end
+
+elseif strcmp(modechoice, 'angle')
+
+for i=1:size(Evals,1)
+for j=1:size(Evals,2)
+P = find(abs(imag(Evals{i,j})) < 10e-10);
+angle_max(i,j) = min(Angles{i,j}(P));
+
+if ~isnan(angle_max(i,j))
+ind(i,j) = find(Angles{i,j} == angle_max(i,j),1);
+lambda_max(i,j) = Evals{i,j}(ind(i,j));
+else lambda_max(i,j) = nan; end
+end
+end
+
+elseif strcmp(modechoice, 'SNR')
+    
+    SNRInp = Inp' * pinv(CovInp) * Inp;
+    
+    for i=1:size(taumode,1)
+        for j=1:size(taumode,2)
+                        
+           SNR(i,j) = max(real(SNRmode{i,j}));
+           angle_max(i,j) = acos(sqrt(SNR(i,j)/SNRInp)) * 180 / pi;
+           tau(i,j) = taumode{i,j}(find(real(SNRmode{i,j}) == SNR(i,j),1));
+           lambda_max(i,j) = -1./tau(i,j);
+            
+%             tau(i,j) = max(taumode{i,j});
+%             lambda_max(i,j) = -1./tau(i,j); 
+%             SNR(i,j) = SNRmode{i,j}(find(taumode{i,j} == tau(i,j),1));
+%             angle_max(i,j) = acos(sqrt(SNR(i,j)/SNRInp)) * 180 / pi;
+            
+        end
+    end
+
+end
 
 figure
 subplot(2,2,1)

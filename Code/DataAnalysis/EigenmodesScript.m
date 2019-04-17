@@ -64,7 +64,7 @@ for rix=1:length(RXS)
 
             dIn_pre{rix} = Covresinv_pre{rix} * dIn_pre{rix};
             dIn_post{rix} = Covresinv_post{rix} * dIn_post{rix};
-            
+                        
           end
     
           % compute eigendecomposition
