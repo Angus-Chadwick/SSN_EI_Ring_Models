@@ -35,8 +35,6 @@ JII_mean = JEE_mean * 1.1;
 stepE = 25 /5;
 stepI = 50 /5;
 
-for networktype = 1:2
-
 ParameterSweep = 'WeightsvsInputs';
 
 for nEI = 1:(2*Nvals)
@@ -72,38 +70,17 @@ II_FF_area = IE_FF_area * (0);
 
 elseif strcmp(ParameterSweep, 'WeightsvsInputs')
 
-if networktype == 1    
- 
-% broad recurrent (sweep inputs)
 
-kEE = 2;
-kIE = 0.1; 
-kEI = 0.3; % I to E concentration
+kEE = 5; 
+kIE = 2; 
+kEI = 2; % I to E concentration
 kII = 0; 
 
 II_FF_area = 0;
 
-kE_FF = 0.1 * nIE;
-IE_FF_amp = 0.005 * nEI;
+kE_FF = 5;
+IE_FF_amp = 0.0001 * nIE;
 IE_FF_area = IE_FF_amp * pi * besseli(0,kE_FF);
-
-elseif networktype == 2
-
-% narrow recurrent (sweep inputs)    
-    
-kEE = 3;
-kIE = 0.4; 
-kEI = 0.4; % I to E concentration
-kII = 0; 
-
-II_FF_area = 0;
-
-kE_FF = 0.1 * nIE;
-IE_FF_amp = 0.005 * nEI;
-IE_FF_area = IE_FF_amp * pi * besseli(0,kE_FF);
-
-end
-
 
 elseif strcmp(ParameterSweep, 'EEvsIEWeights')
 
@@ -541,26 +518,26 @@ end
 
 
 %% Find suitable pairs
-
-SNRFrac0{networktype} = SNRFrac;
-tau0{networktype} = tau;
-
-end
-
-tauthresh = 150;
-tauratio = tau0{2}(:) ./ tau0{1}(:)';
-taumean = (tau0{2}(:) + tau0{1}(:)')/2;
-SNRFracratio = SNRFrac0{2}(:) ./ SNRFrac0{1}(:)';
-
-[I,J] = find(and(SNRFracratio > 1, and(and(abs(tauratio - 1) < 0.1, abs(SNRFracratio - 1) > 0.5), taumean > tauthresh)));
-
-[pair1_row, pair1_col] = ind2sub([nEI,nIE],I);
-[pair2_row, pair2_col] = ind2sub([nEI,nIE],J);
-
-kE_FF_pair1 = pair1_col * 0.1;
-kE_FF_pair2 = pair2_col * 0.1;
-
-IE_FF_amp_pair1 = pair1_row * 0.005;
-IE_FF_amp_pair2 = pair2_row * 0.005;
-
-% Find pairs in which connectivity was narrowersub
+% 
+% SNRFrac0{networktype} = SNRFrac;
+% tau0{networktype} = tau;
+% 
+% %end
+% 
+% tauthresh = 150;
+% tauratio = tau0{2}(:) ./ tau0{1}(:)';
+% taumean = (tau0{2}(:) + tau0{1}(:)')/2;
+% SNRFracratio = SNRFrac0{2}(:) ./ SNRFrac0{1}(:)';
+% 
+% [I,J] = find(and(SNRFracratio > 1, and(and(abs(tauratio - 1) < 0.1, abs(SNRFracratio - 1) > 0.5), taumean > tauthresh)));
+% 
+% [pair1_row, pair1_col] = ind2sub([nEI,nIE],I);
+% [pair2_row, pair2_col] = ind2sub([nEI,nIE],J);
+% 
+% kE_FF_pair1 = pair1_col * 0.1;
+% kE_FF_pair2 = pair2_col * 0.1;
+% 
+% IE_FF_amp_pair1 = pair1_row * 0.005;
+% IE_FF_amp_pair2 = pair2_row * 0.005;
+% 
+% % Find pairs in which connectivity was narrowersub
