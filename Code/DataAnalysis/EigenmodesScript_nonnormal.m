@@ -76,39 +76,90 @@ for rix=1:length(RXS)
 
     % compute non-normality metrics
     
-    DModes_pre{rix} = Vinv_pre{rix} * Covres_pre{rix} * Vinv_pre{rix}';
-    DModes_post{rix} = Vinv_post{rix} * Covres_post{rix} * Vinv_post{rix}';
+%     DModes_pre{rix} = Vinv_pre{rix} * Covres_pre{rix} * Vinv_pre{rix}';
+%     DModes_post{rix} = Vinv_post{rix} * Covres_post{rix} * Vinv_post{rix}';
     
-    DcorrModes_pre{rix}  = DModes_pre{rix}./sqrt(diag(DModes_pre{rix}) * diag(DModes_pre{rix})') + tril(nan(size(DModes_pre{rix})),0);
-    DcorrModes_post{rix} = DModes_post{rix}./sqrt(diag(DModes_post{rix}) * diag(DModes_post{rix})') + tril(nan(size(DModes_post{rix})),0);
-    
+%     DcorrModes_pre{rix}  = DModes_pre{rix}./sqrt(diag(DModes_pre{rix}) * diag(DModes_pre{rix})') + tril(nan(size(DModes_pre{rix})),0);
+%     DcorrModes_post{rix} = DModes_post{rix}./sqrt(diag(DModes_post{rix}) * diag(DModes_post{rix})') + tril(nan(size(DModes_post{rix})),0);
+  
+    AlignmentModes_pre{rix} = acos(Vpre{rix}' * Vpre{rix});
+    AlignmentModes_post{rix} = acos(Vpost{rix}' * Vpost{rix});
+
     % subselect real eigenmodes
     
     I = find(imag(diag(Dpre{rix})) == 0);
     D = diag(Dpre{rix});
     RealEig_pre{rix} = real(D(I));
     SNRfrac_pre{rix} = real(SNRfrac_pre{rix}(I));
-    DcorrModes_pre{rix} = real(DcorrModes_pre{rix}(I,I));
+ %   DcorrModes_pre{rix} = real(DcorrModes_pre{rix}(I,I));
+    AlignmentModes_pre{rix} = real(AlignmentModes_pre{rix}(I,I)) + tril(nan(length(RealEig_pre{rix})),0);
+    
     
     I = find(imag(diag(Dpost{rix})) == 0);
     D = diag(Dpost{rix});
     RealEig_post{rix} = real(D(I));
     SNRfrac_post{rix} = real(SNRfrac_post{rix}(I));
-    DcorrModes_post{rix} = real(DcorrModes_post{rix}(I,I));
+%    DcorrModes_post{rix} = real(DcorrModes_post{rix}(I,I));
+    AlignmentModes_post{rix} = real(AlignmentModes_post{rix}(I,I)) + tril(nan(length(RealEig_post{rix})),0);
     
-    RealEig_Fracs_pre{rix}  = bsxfun(@times, RealEig_pre{rix}, 1./RealEig_pre{rix}') + tril(nan(length(RealEig_pre{rix})),0);
-    RealEig_Fracs_post{rix} = bsxfun(@times, RealEig_post{rix}, 1./RealEig_post{rix}') + tril(nan(length(RealEig_post{rix})),0);      
+%     RealEig_Fracs_pre{rix}  = bsxfun(@times, RealEig_pre{rix}, 1./RealEig_pre{rix}') + tril(nan(length(RealEig_pre{rix})),0);
+%     RealEig_Fracs_post{rix} = bsxfun(@times, RealEig_post{rix}, 1./RealEig_post{rix}') + tril(nan(length(RealEig_post{rix})),0);      
 
-    DcorrModes_pre{rix} = DcorrModes_pre{rix}(:);
-    DcorrModes_post{rix} = DcorrModes_post{rix}(:);
-    RealEig_Fracs_pre{rix} = RealEig_Fracs_pre{rix}(:);
-    RealEig_Fracs_post{rix} = RealEig_Fracs_post{rix}(:);
 
-    NonNormalAmp_pre{rix} = 1 - 4 * RealEig_Fracs_pre{rix} ./ (1+RealEig_Fracs_pre{rix}).^2 .* DcorrModes_pre{rix}.^2;
-    NonNormalAmp_post{rix} = 1 - 4 * RealEig_Fracs_post{rix} ./ (1+RealEig_Fracs_post{rix}).^2 .* DcorrModes_post{rix}.^2;
+    RealEig_Diffs_pre{rix}  = bsxfun(@minus, RealEig_pre{rix}, RealEig_pre{rix}') + tril(nan(length(RealEig_pre{rix})),0);
+    RealEig_Diffs_post{rix} = bsxfun(@minus, RealEig_post{rix}, RealEig_post{rix}') + tril(nan(length(RealEig_post{rix})),0);      
+
+
     
+
+%     DcorrModes_pre{rix} = DcorrModes_pre{rix}(:);
+%     DcorrModes_post{rix} = DcorrModes_post{rix}(:);
+%     RealEig_Fracs_pre{rix} = RealEig_Fracs_pre{rix}(:);
+%     RealEig_Fracs_post{rix} = RealEig_Fracs_post{rix}(:);
+% 
+%     AlignmentModes_pre{rix} = AlignmentModes_pre{rix}(:);
+%     AlignmentModes_post{rix} = AlignmentModes_post{rix}(:);
+%     RealEig_Diffs_pre{rix} = RealEig_Diffs_pre{rix}(:);
+%     RealEig_Diffs_post{rix} = RealEig_Diffs_post{rix}(:);
+
+
+%     NonNormalAmp_pre{rix} = 1 - 4 * RealEig_Fracs_pre{rix} ./ (1+RealEig_Fracs_pre{rix}).^2 .* DcorrModes_pre{rix}.^2;
+%     NonNormalAmp_post{rix} = 1 - 4 * RealEig_Fracs_post{rix} ./ (1+RealEig_Fracs_post{rix}).^2 .* DcorrModes_post{rix}.^2;
+    
+%      NonNormalAmp_pre{rix} = RealEig_Diffs_pre{rix} .* cos(AlignmentModes_pre{rix}) ./ sin(AlignmentModes_pre{rix}) ;
+%      NonNormalAmp_post{rix} = RealEig_Diffs_post{rix} .* cos(AlignmentModes_post{rix}) ./ sin(AlignmentModes_post{rix}) ;
+
+     NonNormalAmp_pre{rix} = -abs(RealEig_Diffs_pre{rix}) .* cos(AlignmentModes_pre{rix})  ;
+     NonNormalAmp_post{rix} = -abs(RealEig_Diffs_post{rix}) .* cos(AlignmentModes_post{rix})  ;
+     
+
+
 end
 
+
+%% Try to plot measures of multiple defectiveness
+
+for rix=1:length(RXS)
+subplot(2,1,1)
+hold on
+X = -abs(RealEig_Diffs_pre{rix}); % 
+Y = abs(cos(AlignmentModes_pre{rix}));
+Xtot_pre{rix} = nansum(1./X) + nansum(1./X');
+Ytot_pre{rix} = nansum(Y) + nansum(Y');
+scatter(Xtot_pre{rix} , (Ytot_pre{rix} ))  % X is similarity of eigenvalues
+
+
+subplot(2,1,2)
+hold on
+X = -abs(RealEig_Diffs_post{rix});
+Y = abs(cos(AlignmentModes_post{rix}));
+Xtot_post{rix} = nansum(1./X) + nansum(1./X');
+Ytot_post{rix} = nansum(Y) + nansum(Y');
+scatter(Xtot_post{rix}, (Ytot_post{rix}) )
+end
+
+
+%%
     
 
 plot_inputinf = 0;
@@ -128,25 +179,28 @@ end
 rix = 2;
     
 % combine animals
+% 
+ RealEig_pre_tot = vertcat(RealEig_pre{:});
+% SNRfrac_pre_tot = vertcat(SNRfrac_pre{:});
+ RealEig_post_tot = vertcat(RealEig_post{:});
+% SNRfrac_post_tot = vertcat(SNRfrac_post{:});
+% 
+% RealEig_Fracs_pre_tot =  vertcat(RealEig_Fracs_pre{:});
+% RealEig_Fracs_post_tot = vertcat(RealEig_Fracs_post{:});
+% DcorrModes_pre_tot = vertcat(DcorrModes_pre{:});
+% DcorrModes_post_tot = vertcat(DcorrModes_post{:});
+%  
+% NonNormalAmp_pre_tot = 1 - 4 * RealEig_Fracs_pre_tot ./ (1+RealEig_Fracs_pre_tot).^2 .* DcorrModes_pre_tot.^2;
+% NonNormalAmp_post_tot = 1 - 4 * RealEig_Fracs_post_tot ./ (1+RealEig_Fracs_post_tot).^2 .* DcorrModes_post_tot.^2;
+% 
+% 
+% NonNormalAmp_pre_tot(isnan(NonNormalAmp_pre_tot)) = [];
+% NonNormalAmp_post_tot(isnan(NonNormalAmp_post_tot)) = [];
 
-RealEig_pre_tot = vertcat(RealEig_pre{:});
-SNRfrac_pre_tot = vertcat(SNRfrac_pre{:});
-RealEig_post_tot = vertcat(RealEig_post{:});
-SNRfrac_post_tot = vertcat(SNRfrac_post{:});
-
-RealEig_Fracs_pre_tot =  vertcat(RealEig_Fracs_pre{:});
-RealEig_Fracs_post_tot = vertcat(RealEig_Fracs_post{:});
-DcorrModes_pre_tot = vertcat(DcorrModes_pre{:});
-DcorrModes_post_tot = vertcat(DcorrModes_post{:});
- 
-NonNormalAmp_pre_tot = 1 - 4 * RealEig_Fracs_pre_tot ./ (1+RealEig_Fracs_pre_tot).^2 .* DcorrModes_pre_tot.^2;
-NonNormalAmp_post_tot = 1 - 4 * RealEig_Fracs_post_tot ./ (1+RealEig_Fracs_post_tot).^2 .* DcorrModes_post_tot.^2;
-
-
-NonNormalAmp_pre_tot(isnan(NonNormalAmp_pre_tot)) = [];
-
-NonNormalAmp_post_tot(isnan(NonNormalAmp_post_tot)) = [];
-
+RealEig_Diffs_pre_tot = vertcat(RealEig_Diffs_pre{:});
+RealEig_Diffs_post_tot = vertcat(RealEig_Diffs_post{:});
+NonNormalAmp_pre_tot = vertcat(NonNormalAmp_pre{:});
+NonNormalAmp_post_tot = vertcat(NonNormalAmp_post{:});
 % select eigenmodes within physical bounds (stable and not excessively long time constant)
 
 Ipre = find(and(0 < RealEig_pre_tot + 1, RealEig_pre_tot + 1 < 0.99));
@@ -351,21 +405,24 @@ end
 
 clear p_pre_smx p_post_smx p_pre_smxy p_post_smxy
 
-edges{1} = -1:0.01:1;
-edges{2} = 0:0.01:1;
+edges{2} = 0:0.01:1.4;
+edges{1} = 0:0.01:0.35;
 
-sigma_eigfrac = 0.05;
-sigma_DModes = 0.05;
+sigma_1 = 0.05;
+sigma_2 = 0.05;
 
-s1=(exp(-(bsxfun(@minus, edges{1}, DcorrModes_pre_tot(~isnan(RealEig_Fracs_pre_tot)))).^2/(2 * sigma_DModes^2)));
-s2=(exp(-(bsxfun(@minus, edges{2}, RealEig_Fracs_pre_tot(~isnan(RealEig_Fracs_pre_tot))).^2)/(2*sigma_eigfrac^2)));
+s1=(exp(-(bsxfun(@minus, edges{1}, abs(NonNormalAmp_pre_tot(~isnan(RealEig_Diffs_pre_tot)))) ).^2/(2 * sigma_1^2)));
+s2=(exp(-(bsxfun(@minus, edges{2}, abs(RealEig_Diffs_pre_tot(~isnan(RealEig_Diffs_pre_tot)))) .^2)/(2*sigma_2^2)));
 s3=s1' * s2;
 p_pre_smxy = s3;
-s1=(exp(-(bsxfun(@minus, edges{1}, DcorrModes_post_tot(~isnan(RealEig_Fracs_post_tot)))).^2/(2 * sigma_DModes^2)));
-s2=(exp(-(bsxfun(@minus, edges{2}, RealEig_Fracs_post_tot(~isnan(RealEig_Fracs_post_tot))).^2)/(2*sigma_eigfrac^2)));
+s1=(exp(-(bsxfun(@minus, edges{1}, abs(NonNormalAmp_post_tot(~isnan(RealEig_Diffs_post_tot))))) .^2/(2 * sigma_1^2)));
+s2=(exp(-(bsxfun(@minus, edges{2}, abs(RealEig_Diffs_post_tot(~isnan(RealEig_Diffs_post_tot)))) .^2)/(2*sigma_2^2)));
 s3=s1' * s2;
 p_post_smxy = s3;
 
+
+p_pre_smxy = p_pre_smxy / sum(p_pre_smxy(:));
+p_post_smxy = p_post_smxy / sum(p_post_smxy(:));
 
 figure 
 cmax = 0.05;

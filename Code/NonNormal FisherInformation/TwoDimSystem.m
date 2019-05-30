@@ -39,7 +39,7 @@ for q=1:20
 
 imagesc(90 * ([-10:10])/10, 90 * ([-10:10])/10, squeeze(I_F_norm(:,:,s)));
 caxis([0,1.6])
-
+colorbar
 end
 
 
@@ -52,7 +52,7 @@ tau_a = 1;
 
 qmax = 1000;
 
-Sigma_u = [1,0;0,1];
+Sigma_u = [1,0.5;0.5,1];
 
 anglemax = 41;
 

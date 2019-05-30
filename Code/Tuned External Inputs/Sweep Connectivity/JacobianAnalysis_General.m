@@ -4,7 +4,7 @@ clear all
 
 % simulation parameters
 
-Nvals = 51; % 
+Nvals = 11; % 
 Nt = 1000;  % number of timesteps
 
 % initialise variables
@@ -35,7 +35,9 @@ JII_mean = JEE_mean * 1.1;
 stepE = 25 /5;
 stepI = 50 /5;
 
-ParameterSweep = 'random';
+for networktype = 1:2
+
+ParameterSweep = 'WeightsvsInputs';
 
 for nEI = 1:(2*Nvals)
     nEI
@@ -45,7 +47,21 @@ q=1;
 
 %% create network        
 
-if strcmp(ParameterSweep, 'EvsIWeights')
+if strcmp(ParameterSweep, 'NoisyWeights')
+
+kEE = 3;
+kIE = 0.1 * (nEI-1); 
+kEI = 0.4; % I to E concentration
+kII = 0.0; 
+
+II_FF_area = IE_FF_area * (0);
+
+noiseEE = 0;
+noiseIE = (nIE-1) / 10;
+noiseEI = 0;
+noiseII = 0;
+
+elseif strcmp(ParameterSweep, 'EvsIWeights')
 
 kEE = (nEI-1) / stepE;
 kIE = (nIE-1) / stepI; 
@@ -56,15 +72,37 @@ II_FF_area = IE_FF_area * (0);
 
 elseif strcmp(ParameterSweep, 'WeightsvsInputs')
 
-kEE = 0.5;
-kIE = 0.5; 
-kEI = 0.5; % I to E concentration
+if networktype == 1    
+ 
+% broad recurrent (sweep inputs)
+
+kEE = 2;
+kIE = 0.1; 
+kEI = 0.3; % I to E concentration
 kII = 0; 
 
-II_FF_area =0;
+II_FF_area = 0;
 
 kE_FF = 0.1 * nIE;
-IE_FF_area = 1 * nEI;
+IE_FF_amp = 0.005 * nEI;
+IE_FF_area = IE_FF_amp * pi * besseli(0,kE_FF);
+
+elseif networktype == 2
+
+% narrow recurrent (sweep inputs)    
+    
+kEE = 3;
+kIE = 0.4; 
+kEI = 0.4; % I to E concentration
+kII = 0; 
+
+II_FF_area = 0;
+
+kE_FF = 0.1 * nIE;
+IE_FF_amp = 0.005 * nEI;
+IE_FF_area = IE_FF_amp * pi * besseli(0,kE_FF);
+
+end
 
 
 elseif strcmp(ParameterSweep, 'EEvsIEWeights')
@@ -92,7 +130,6 @@ kEI = kEE; % I to E concentration
 kII = kEE; 
 
 II_FF_area = - IE_FF_area;
-
 JEE_mean = 15/NE * besseli(0,1);
 JEI_mean = 0.024;  % standard values
 JIE_mean = 0.024 * (1 - nEI / (2*Nvals+1));
@@ -159,7 +196,7 @@ elseif strcmp(ParameterSweep, 'WeightsAmp')
 % kEE = 3;
 % kIE = kE_FF * 2; 
 % kEI = kE_FF * 2; % I to E concentration
-% kII = kE_FF * 2; 
+% kII = kE_FF * 2; ca
 % 
 % II_FF_area = 0;
 % 
@@ -392,9 +429,14 @@ elseif strcmp(ParameterSweep, 'Persi')
 end
 
 network = create_network_varyall(kEE,kEI,kIE,kII, JEE_mean, JEI_mean, JIE_mean, JII_mean);
-
 NE = network.cells.NE;
 NI = network.cells.NI;
+if strmatch(ParameterSweep,'NoisyWeights')
+network.connectivity.JEE = max(network.connectivity.JEE + mean(network.connectivity.JEE(:)) * randn(NE) * noiseEE, 0);
+network.connectivity.JEI = max(network.connectivity.JEI + mean(network.connectivity.JEI(:)) * randn(NE,NI) * noiseEI, 0);
+network.connectivity.JIE = max(network.connectivity.JIE + mean(network.connectivity.JIE(:)) * randn(NI,NE) * noiseIE, 0);
+network.connectivity.JII = max(network.connectivity.JII + mean(network.connectivity.JII(:)) * randn(NI) * noiseII, 0);
+end
 
 %% create inputs
 
@@ -473,7 +515,7 @@ if StableSim(nEI,nIE) R0 = [mean(rE(:,(Nt/2):end),2)', mean(rI(:,(Nt/2):end),2)'
         SNRmode{nEI,nIE} = (Vleft * Inp).^2 ./ diag(Vleft * CovInp * Vleft') / (Inp' * pinv(CovInp) * Inp);
         taumode{nEI,nIE} = -1./real(diag(D));        
         
-        SNRFrac(nEI,nIE) = sqrt(   max(real(SNRmode{nEI,nIE})))
+        SNRFrac(nEI,nIE) = sqrt(max(real(SNRmode{nEI,nIE})))
         tau(nEI,nIE) = taumode{nEI,nIE}(find(real(SNRmode{nEI,nIE}) == max(real(SNRmode{nEI,nIE})),1))
        
         
@@ -488,64 +530,37 @@ end
 
 % plot all networks
 
-hold on
-for i=1:size(SNRmode,1)
-for j=1:size(SNRmode,2)
-if min(taumode{i,j}) > 0
-scatter(real(sqrt(real(SNRmode{i,j}))), taumode{i,j})
-end
-end
+% hold on
+% for i=1:size(SNRmode,1)
+% for j=1:size(SNRmode,2)
+% if min(taumode{i,j}) > 0
+% scatter(real(sqrt(real(SNRmode{i,j}))), taumode{i,j})
+% end
+% end
+% end
+
+
+%% Find suitable pairs
+
+SNRFrac0{networktype} = SNRFrac;
+tau0{networktype} = tau;
+
 end
 
-% modechoice = 'SNR';
-% 
-% if strcmp(modechoice, 'timeconstant')
-% 
-% for i=1:size(Evals,1)
-% for j=1:size(Evals,2)
-% P = find(abs(imag(Evals{i,j})) < 10e-10);
-% lambda_max(i,j) = max(real(Evals{i,j}(P)));
-% ind(i,j) = find(real(Evals{i,j}) == lambda_max(i,j),1);
-% angle_max(i,j) = Angles{i,j}(ind(i,j));
-% end
-% end
-% 
-% elseif strcmp(modechoice, 'angle')
-% 
-% for i=1:size(Evals,1)
-% for j=1:size(Evals,2)
-% P = find(abs(imag(Evals{i,j})) < 10e-10);
-% angle_max(i,j) = min(Angles{i,j}(P));
-% 
-% if ~isnan(angle_max(i,j))
-% ind(i,j) = find(Angles{i,j} == angle_max(i,j),1);
-% lambda_max(i,j) = Evals{i,j}(ind(i,j));
-% else lambda_max(i,j) = nan; end
-% end
-% end
-% 
-% elseif strcmp(modechoice, 'SNR')
-%     
-%     
-%     for i=1:size(taumode,1)
-%         for j=1:size(taumode,2)
-%                         
-%            SNR(i,j) = max(real(SNRmode{i,j}));
-%            tau(i,j) = taumode{i,j}(find(real(SNRmode{i,j}) == SNR(i,j),1));
-% %                      
-% %             tau(i,j) = max(taumode{i,j});
-% %             SNR(i,j) = real(SNRmode{i,j}(find(taumode{i,j} == tau(i,j),1)));
-% %             
-%         end
-%     end
-% 
-% end
-% 
-% SNRFrac = sqrt(SNR);
-% 
-% subplot(1,2,1)
-% imagesc([0:21] / stepE, [0:21] / stepI,SNRFrac)
-% set(gca, 'ydir', 'normal')
-% subplot(1,2,2)
-% imagesc([0:21] / stepE, [0:21] / stepI,tau)
-% set(gca, 'ydir', 'normal')
+tauthresh = 150;
+tauratio = tau0{2}(:) ./ tau0{1}(:)';
+taumean = (tau0{2}(:) + tau0{1}(:)')/2;
+SNRFracratio = SNRFrac0{2}(:) ./ SNRFrac0{1}(:)';
+
+[I,J] = find(and(SNRFracratio > 1, and(and(abs(tauratio - 1) < 0.1, abs(SNRFracratio - 1) > 0.5), taumean > tauthresh)));
+
+[pair1_row, pair1_col] = ind2sub([nEI,nIE],I);
+[pair2_row, pair2_col] = ind2sub([nEI,nIE],J);
+
+kE_FF_pair1 = pair1_col * 0.1;
+kE_FF_pair2 = pair2_col * 0.1;
+
+IE_FF_amp_pair1 = pair1_row * 0.005;
+IE_FF_amp_pair2 = pair2_row * 0.005;
+
+% Find pairs in which connectivity was narrowersub

@@ -1069,9 +1069,11 @@ for prepost = {'pre', 'post'}
     if strmatch(prepost, 'pre')
         
         Asame_pre_tot = cellfun(@nanmean, Asame);
+        Asame_pre_tot_std = cellfun(@nanstd, Asame);
         Asame_pre_tot_sem = cellfun(@nanstd, Asame) ./ sqrt(cellfun(@length, Asame));
         Aopp_pre_tot = cellfun(@nanmean, Aopp);
         Aopp_pre_tot_sem = cellfun(@nanstd, Aopp) ./ sqrt(cellfun(@length, Aopp));
+        Aopp_pre_tot_std = cellfun(@nanstd, Aopp);
         
         A_AA_pre_tot = cellfun(@nanmean, A_AA);
         A_VV_pre_tot = cellfun(@nanmean, A_VV);
@@ -1089,8 +1091,10 @@ for prepost = {'pre', 'post'}
     elseif strmatch(prepost, 'post')
        
         Asame_post_tot = cellfun(@nanmean, Asame);
+        Asame_post_tot_std = cellfun(@nanstd, Asame);
         Asame_post_tot_sem = cellfun(@nanstd, Asame) ./ sqrt(cellfun(@length, Asame));
         Aopp_post_tot = cellfun(@nanmean, Aopp);
+        Aopp_post_tot_std = cellfun(@nanstd, Aopp);
         Aopp_post_tot_sem = cellfun(@nanstd, Aopp) ./ sqrt(cellfun(@length, Aopp));
         
         A_AA_post_tot = cellfun(@nanmean, A_AA);
