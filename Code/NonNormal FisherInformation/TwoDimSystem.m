@@ -38,7 +38,7 @@ for q=1:20
     s = q*10 - 9;
 
 imagesc(90 * ([-10:10])/10, 90 * ([-10:10])/10, squeeze(I_F_norm(:,:,s)));
-caxis([0,1.6])
+caxis([0,2])
 colorbar
 end
 

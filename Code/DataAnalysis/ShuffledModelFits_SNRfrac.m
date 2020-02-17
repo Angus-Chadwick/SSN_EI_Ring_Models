@@ -495,8 +495,10 @@ SNRfrac_post_tot = vertcat(SNRfrac_post{:});
 
 % select eigenmodes within physical bounds (stable and not excessively long time constant)
 
-Ipre = find(and(0 < RealEig_pre_tot + 1, RealEig_pre_tot + 1 < 0.99));
-Ipost = find(and(0 < RealEig_post_tot + 1, RealEig_post_tot + 1 < 0.99));
+CutOff = 0.95;
+
+Ipre = find(and(0 < RealEig_pre_tot + 1, RealEig_pre_tot + 1 < CutOff));
+Ipost = find(and(0 < RealEig_post_tot + 1, RealEig_post_tot + 1 < CutOff));
 
 % convert discrete eigenvalues to continuous time constants
 
@@ -505,14 +507,14 @@ taupost_tot = -125./log(RealEig_post_tot(Ipost)+1);
 
 % take moving average windows of eigenmodes (time windows and angle windows)
 
-binwidth = 100;
-binstep = 0.25 * binwidth;
+
+binwidth = 150;
+binstep = 0.1 * binwidth;
 taubins = binwidth:binstep:1400;
 
 SNRfracbin_width = 0.025;
-SNRfracbin_step = 0.25 * SNRfracbin_width;
+SNRfracbin_step = 0.1 * SNRfracbin_width;
 SNRbins = SNRfracbin_width:SNRfracbin_step:0.25; 
-
 
 clear SNRfracbin_pre SNRfracbin_post SNRfracSEMbin_pre SNRfracSEMbin_post p1 p2
 

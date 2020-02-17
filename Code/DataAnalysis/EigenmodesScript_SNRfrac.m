@@ -89,25 +89,6 @@ for rix=1:length(RXS)
   
 end
 
- 
-plot_angles = 0;
-if plot_angles
-    figure
-for rix=1:length(RXS)
-  
-  subplot(length(RXS),2,2*rix - 1)
-  I = find(imag(diag(Dpre{rix})) == 0);
-  [~,J] = sort(diag(Dpre{rix}(I,I)));
-  angles_pre{rix} = real(acos(Vpre{rix}(:,J)' * Vpre{rix}(:,J))) * 180/pi;
-  imagesc(min(abs(angles_pre{rix}), abs(180-angles_pre{rix})))
-  subplot(length(RXS),2,2*rix)
-  I = find(imag(diag(Dpost{rix})) == 0);
-  [~,J] = sort(diag(Dpost{rix}(I,I)));
-  angles_post{rix} = real(acos(Vpost{rix}(:,J)' * Vpost{rix}(:,J))) * 180/pi;
-  imagesc(min(abs(angles_post{rix}), abs(180-angles_post{rix})))
-end
-end
-    
 
 plot_inputinf = 0;
 if plot_inputinf
@@ -136,8 +117,10 @@ SNRfrac_post_tot = vertcat(SNRfrac_post{:});
 
 % select eigenmodes within physical bounds (stable and not excessively long time constant)
 
-Ipre = find(and(0 < RealEig_pre_tot + 1, RealEig_pre_tot + 1 < 0.99));
-Ipost = find(and(0 < RealEig_post_tot + 1, RealEig_post_tot + 1 < 0.99));
+CutOff = 0.95; % 0.95 or 0.99?
+
+Ipre = find(and(0 < RealEig_pre_tot + 1, RealEig_pre_tot + 1 < CutOff));
+Ipost = find(and(0 < RealEig_post_tot + 1, RealEig_post_tot + 1 < CutOff));
 
 % convert discrete eigenvalues to continuous time constants
 
@@ -204,7 +187,7 @@ shadedErrorBar(taubins, SNRfracbin_post , SNRfracSEMbin_post,'lineprops','b');
 axis([0,1250,0,0.2])
 set(gca, 'fontsize', 18)
 xlabel('Time Constant (ms)')
-ylabel('Fraction of Feedforward Information')
+ylabel('Normalized Input SNR')
 
 if plotrawdata
 hold on
@@ -214,7 +197,7 @@ hold on
     legend('Pre-Learning' ,'Post-Learning')
     box on
     xlabel('Time constant (ms)')
-    ylabel('Fraction of Feedforward Information')
+    ylabel('Normalized Input SNR')
     title('Dynamical Modes')
     set(gca, 'fontsize', 24)
     
@@ -228,7 +211,7 @@ hold on
 shadedErrorBar(SNRbins, taubin_post, taubin_post_sem,'lineprops','b');
 set(gca, 'fontsize', 18)
 ylabel('Time Constant (ms)')
-xlabel('Fraction of Feedforward Information')
+xlabel('Normalized Input SNR')
 axis([0,0.2,0,1250])
 
 

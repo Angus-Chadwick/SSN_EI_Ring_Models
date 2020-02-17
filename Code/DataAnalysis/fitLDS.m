@@ -71,8 +71,8 @@ elseif strmatch(fixvars, 'Mixed') % allow only some inputs to change
                  
                         xtot{j} = drmat0tot(CELLLAB_ALL == CLS(j),:) / Lambdatot_partialW_ChangeI;
                         xtot{j}(:, (find(~ismember(CELLLAB_ALL, changeWlin))) + length(CELLLAB_ALL)) = xtot{j}(:, ~ismember(CELLLAB_ALL, changeWlin));
-                        xpre(CELLLAB_ALL == CLS(j),:)  = xtot{j}(:, [1:length(CELLLAB_ALL),  (2*length(CELLLAB_ALL) + 1):(2*length(CELLLAB_ALL) + 51), end]);
-                        xpost(CELLLAB_ALL == CLS(j),:) = xtot{j}(:, [(length(CELLLAB_ALL)+1):(2*length(CELLLAB_ALL)), (2*length(CELLLAB_ALL) + 51 + 1):end]);        
+                        xpre(CELLLAB_ALL == CLS(j),:)  = xtot{j}(:, [1:length(CELLLAB_ALL),  (2*length(CELLLAB_ALL) + 1):(2*length(CELLLAB_ALL) + 3 * length(rngtot)), end]);
+                        xpost(CELLLAB_ALL == CLS(j),:) = xtot{j}(:, [(length(CELLLAB_ALL)+1):(2*length(CELLLAB_ALL)), (2*length(CELLLAB_ALL) + 3 * length(rngtot) + 1):end]);        
 
                         Prediction_tot(CELLLAB_ALL == CLS(j),:) = xtot{j} * Lambdatot_partialW_ChangeI;
 

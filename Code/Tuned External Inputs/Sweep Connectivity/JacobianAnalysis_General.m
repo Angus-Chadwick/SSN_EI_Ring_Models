@@ -20,7 +20,7 @@ Rtot_cov = RE;
 % fixed input parameters
 NE = 1000;
 
-stimvals = 2*pi * [160,200] / 360;
+stimvals = 2*pi * [180,220] / 360;
 Nstim = length(stimvals);
 
 noise = 0;
@@ -35,8 +35,8 @@ JII_mean = JEE_mean * 1.1;
 stepE = 25 /5;
 stepI = 50 /5;
 
-ParameterSweep = 'WeightsvsInputs';
-
+ParameterSweep = 'NonUniformRing';
+soft_thresh = 0;
 for nEI = 1:(2*Nvals)
     nEI
     for nIE = 1:(2*Nvals)
@@ -59,28 +59,37 @@ noiseIE = (nIE-1) / 10;
 noiseEI = 0;
 noiseII = 0;
 
-elseif strcmp(ParameterSweep, 'EvsIWeights')
+elseif strcmp(ParameterSweep, 'NonUniformRing')
 
-kEE = (nEI-1) / stepE;
-kIE = (nIE-1) / stepI; 
+kEE = 2;  % note: now trying this reduced in all sims... (used to be 2)
+kIE = 0.1; 
 kEI = 0.4; % I to E concentration
 kII = 0.0; 
 
 II_FF_area = IE_FF_area * (0);
 
-elseif strcmp(ParameterSweep, 'WeightsvsInputs')
+elseif strcmp(ParameterSweep, 'EvsIWeights')
 
+kEE = (nEI-1) / stepE * 2.5;   % for sweepss
+kIE = (nIE-1) / stepI * 2;  % for sweeps
+% kEE = (nEI-1) / stepE; 
+% kIE = (nIE-1) / stepI;
+kEI = 0.4; % I to E concentration
+kII = 0.0; 
 
-kEE = 5; 
-kIE = 2; 
-kEI = 2; % I to E concentration
-kII = 0; 
+II_FF_area = IE_FF_area * (0);
 
-II_FF_area = 0;
+elseif strcmp(ParameterSweep, 'EvsIAmps')
 
-kE_FF = 5;
-IE_FF_amp = 0.0001 * nIE;
-IE_FF_area = IE_FF_amp * pi * besseli(0,kE_FF);
+kEE = 2;
+kIE = 0.1;
+kEI = 0.4;
+kII = 0.0;
+
+II_FF_area = IE_FF_area * (0);
+
+JEE_mean = 0.04  * nEI / 22;
+JIE_mean = 0.08  * nIE / 22;
 
 elseif strcmp(ParameterSweep, 'EEvsIEWeights')
 
@@ -422,7 +431,46 @@ theta_aI = theta_s;
 
 inputs  = create_inputs_varyall(theta_s, noise, kE_FF, kI_FF, IE_FF_area, II_FF_area, network);
 
-   
+if strmatch(ParameterSweep, 'NonUniformRing')
+    
+%     kmod = 0.1 * (nIE - 1);
+%     Amod = 0.05 * (nEI - 1); %  / besseli(0,kmod);  % trying out bessel normalisation - seems better without...
+%     JIE_mod = exp(kmod * cos(inputs.theta_pI - stimvals(1)))' *  exp(kmod * cos(inputs.theta_pE - stimvals(1))) + exp(kmod * cos(inputs.theta_pI - stimvals(2)))' *  exp(kmod * cos(inputs.theta_pE - stimvals(2)));  
+%     network.connectivity.JIE = network.connectivity.JIE .* (1+Amod * JIE_mod) ./ mean(1+ Amod * JIE_mod(:));
+% 
+%     kmod = 0.4 * (nIE - 1);
+%     Amod = 0.000075 * (nEI - 1)  / besseli(0,kmod)^2;
+%     
+%     JIE_mod = exp(kmod * cos(inputs.theta_pI - stimvals(1)))' *  exp(kmod * cos(inputs.theta_pE - stimvals(1))) + exp(kmod * cos(inputs.theta_pI - stimvals(2)))' *  exp(kmod * cos(inputs.theta_pE - stimvals(2)));
+%     network.connectivity.JIE = (network.connectivity.JIE + Amod * JIE_mod) .* mean(network.connectivity.JIE(:)) ./ mean(network.connectivity.JIE(:) + Amod * JIE_mod(:));
+
+
+    kmod = 0.2 * (nIE - 1);
+    Amod = 3 * 0.000075 * (nEI - 1)  / besseli(0,kmod)^2; % just one stim because its modes around a fixed point
+    
+    Nsubnets = 1; % number of stimulus-specific subnetworks
+    
+    if Nsubnets == 1
+    
+    JIE_mod = exp(kmod * cos(inputs.theta_pI - stimvals(1)))' *  exp(kmod * cos(inputs.theta_pE - stimvals(1)));
+
+    elseif Nsubnets == 2
+    
+    JIE_mod = exp(kmod * cos(inputs.theta_pI - stimvals(1)))' *  exp(kmod * cos(inputs.theta_pE - stimvals(1))) + exp(kmod * cos(inputs.theta_pI - stimvals(2)))' *  exp(kmod * cos(inputs.theta_pE - stimvals(2)));
+            
+    end
+        
+    network.connectivity.JIE = (network.connectivity.JIE + Amod * JIE_mod) .* mean(network.connectivity.JIE(:)) ./ mean(network.connectivity.JIE(:) + Amod * JIE_mod(:));
+
+
+
+%     kmod = 0.1 * (nIE - 1);
+%     Amod = 0.0002 * (nEI - 1)  / besseli(0,kmod)^2;
+% 
+%     JEE_mod = exp(kmod * cos(inputs.theta_pE - stimvals(1)))' *  exp(kmod * cos(inputs.theta_pE - stimvals(1))) + exp(kmod * cos(inputs.theta_pE - stimvals(2)))' *  exp(kmod * cos(inputs.theta_pE - stimvals(2)));
+%     network.connectivity.JEE = (network.connectivity.JEE + Amod * JEE_mod) .* mean(network.connectivity.JEE(:)) ./ mean(network.connectivity.JEE(:) + Amod * JEE_mod(:));
+%     
+end   
 %% simulate
  
  NoiseModel = 'Add'; 
@@ -492,52 +540,266 @@ if StableSim(nEI,nIE) R0 = [mean(rE(:,(Nt/2):end),2)', mean(rI(:,(Nt/2):end),2)'
         SNRmode{nEI,nIE} = (Vleft * Inp).^2 ./ diag(Vleft * CovInp * Vleft') / (Inp' * pinv(CovInp) * Inp);
         taumode{nEI,nIE} = -1./real(diag(D));        
         
-        SNRFrac(nEI,nIE) = sqrt(max(real(SNRmode{nEI,nIE})))
-        tau(nEI,nIE) = taumode{nEI,nIE}(find(real(SNRmode{nEI,nIE}) == max(real(SNRmode{nEI,nIE})),1))
+        SNRFrac(nEI,nIE) = sqrt(max(real(SNRmode{nEI,nIE})));  % complex translation mode is problematic
+        tau(nEI,nIE) = taumode{nEI,nIE}(find(real(SNRmode{nEI,nIE}) == max(real(SNRmode{nEI,nIE})),1));
        
         
+        Modes{nEI,nIE} = Vleft;
+        
+        
+        % compute stationary state information
+%         
+%         J = (Phip * W - eye(NE+NI));
+%         Sigma = lyap((inv(T) * J), inv(T) * Phip * CovInp *inv(T) * Phip); 
+%         rp = -inv(J) * Phip * Inp;
+%         InfOut(nEI,nIE) =  rp' * pinv(Sigma) * rp  / (Inp' * pinv(CovInp) * Inp)
+
+% % SNR for complex modes:
+% 
+% S =  ((real(D) * real(Vleft) + imag(D) * imag(Vleft)) * Inp) .*  (-2./diag(abs(D)).^2); % signal for oscillating mode (projection onto real part)
+% N =  diag(real(Vleft) * CovInp * real(Vleft')) .* (-real(diag(D)) ./ abs(diag(D)).^2 - 1./ real(diag(D))) + diag(imag(Vleft) * CovInp * imag(Vleft')) .* (+real(diag(D)) ./ abs(diag(D)).^2 - 1./ real(diag(D))) + diag(real(Vleft) * CovInp * imag(Vleft')) .* (-2 * imag(diag(D)) ./ abs(diag(D)).^2);
+% SNRmode_full{nEI,nIE} = 0.5 * S.^2 ./ N / (Inp' * pinv(CovInp) * Inp);   
+% InputSNRs = SNRmode_full{nEI,nIE} ./ taumode{nEI,nIE};
+% SNRFrac_full(nEI,nIE) = max(InputSNRs);
+% q = find(InputSNRs == max(InputSNRs),1);
+% tau_full(nEI,nIE) = taumode{nEI,nIE}(q);
+
     end
 end
 
 
-%% for random search
 
-% find cases where all kXY grow and where SNRFrac increases but tau doesn't
-% change much
+%% For image maps
 
-% plot all networks
+for nIE = 1:22
+    for nEI = 1:22
+        StableFP(nEI,nIE) = and(StableSim(nEI,nIE), min(taumode{nEI,nIE}) > 0);
+        Width(nEI,nIE) = sum(FixedPoint{nEI,nIE}(1:1000) > 0);
+    end
+end
 
-% hold on
-% for i=1:size(SNRmode,1)
-% for j=1:size(SNRmode,2)
-% if min(taumode{i,j}) > 0
-% scatter(real(sqrt(real(SNRmode{i,j}))), taumode{i,j})
-% end
-% end
-% end
+Sharpening = 1000./Width - 1;
+
+% create a colormap for scatter plots
+
+clear colorMap
+
+for i=1:255
+    
+            colorMap(i,:) = hsv2rgb([1,1,(i-1)/254]);
+
+end
 
 
-%% Find suitable pairs
-% 
-% SNRFrac0{networktype} = SNRFrac;
-% tau0{networktype} = tau;
-% 
-% %end
-% 
-% tauthresh = 150;
-% tauratio = tau0{2}(:) ./ tau0{1}(:)';
-% taumean = (tau0{2}(:) + tau0{1}(:)')/2;
-% SNRFracratio = SNRFrac0{2}(:) ./ SNRFrac0{1}(:)';
-% 
-% [I,J] = find(and(SNRFracratio > 1, and(and(abs(tauratio - 1) < 0.1, abs(SNRFracratio - 1) > 0.5), taumean > tauthresh)));
-% 
-% [pair1_row, pair1_col] = ind2sub([nEI,nIE],I);
-% [pair2_row, pair2_col] = ind2sub([nEI,nIE],J);
-% 
-% kE_FF_pair1 = pair1_col * 0.1;
-% kE_FF_pair2 = pair2_col * 0.1;
-% 
-% IE_FF_amp_pair1 = pair1_row * 0.005;
-% IE_FF_amp_pair2 = pair2_row * 0.005;
-% 
-% % Find pairs in which connectivity was narrowersub
+if strcmp(ParameterSweep, 'EvsIWeights')
+
+
+y = ([1:22]-1) / stepE * 2.5; 
+x = ([1:22]-1) / stepI * 2;
+
+subplot(3,4,1)
+Sharpening(StableFP == 0) = nan;
+h = imagesc(x, y, Sharpening)
+h.AlphaData = ones(size(h.CData)); 
+h.AlphaData(isnan(h.CData)) = 0;
+set(gca, 'fontsize', 18)
+xlabel('E to I Specificity')
+ylabel('E to E Specificity')
+title('Recurrent Sharpening')
+set(gca, 'ydir', 'normal')
+colormap(gca, colorMap)
+h = colorbar
+caxis([0,5])
+
+
+subplot(3,4,2)
+SNRFrac(StableFP == 0) = nan;
+h = imagesc(x, y, SNRFrac);
+h.AlphaData = ones(size(h.CData)); 
+h.AlphaData(isnan(h.CData)) = 0;
+set(gca, 'fontsize', 18)
+xlabel('E to I Specificity')
+ylabel('E to E Specificity')
+title('Norm. Mode Input SNR')
+h = colorbar;
+caxis([0,1])
+set(gca, 'ydir', 'normal')
+
+subplot(3,4,3)
+tau(StableFP == 0) = nan;
+h = imagesc(x, y, tau);
+h.AlphaData = ones(size(h.CData)); 
+h.AlphaData(isnan(h.CData)) = 0;
+set(gca, 'fontsize', 18)
+xlabel('E to I Specificity')
+ylabel('E to E Specificity')
+title('Mode Time Constant')
+h = colorbar;
+caxis([0,300])
+set(gca, 'ydir', 'normal')
+
+subplot(3,4,4)
+hold on
+for i=1:size(SNRmode,1)
+for j=1:size(SNRmode,2)
+if StableFP(i,j)
+    clr = hsv2rgb([1,1,min(Sharpening(i,j) / 3,1)]);
+    scatter(real(sqrt(real(SNRmode{i,j}))), taumode{i,j}, 100, 'marker', '.', 'markeredgecolor', clr, 'linewidth', 5)
+end
+end
+end
+
+set(gca, 'fontsize', 18)
+xlabel('Norm. Mode Input SNR')
+ylabel('Mode Time Constant')
+axis([0,1,0,300])
+
+colormap(gca, colorMap)
+h = colorbar
+set(h,'fontsize', 18)
+title(h,'Sharpening')
+set(h, 'ytick', [0,1])
+set(h, 'yticklabel', [{'0'}, {'3'}])
+
+
+elseif strcmp(ParameterSweep, 'EvsIAmps')
+
+y = 0.04  * [1:22] / 22;
+x = 0.08  * [1:22] / 22;
+
+subplot(3,4,5)
+Sharpening(StableFP == 0) = nan;
+h = imagesc(x, y, Sharpening)
+h.AlphaData = ones(size(h.CData)); 
+h.AlphaData(isnan(h.CData)) = 0;
+set(gca, 'fontsize', 18)
+xlabel('E to I Weight')
+ylabel('E to E Weight')
+title('Recurrent Sharpening')
+set(gca, 'ydir', 'normal')
+colormap(gca, colorMap)
+h = colorbar
+caxis([0,5])
+
+
+subplot(3,4,6)
+SNRFrac(StableFP == 0) = nan;
+h = imagesc(x, y, SNRFrac);
+h.AlphaData = ones(size(h.CData)); 
+h.AlphaData(isnan(h.CData)) = 0;
+set(gca, 'fontsize', 18)
+xlabel('E to I Weight')
+ylabel('E to E Weight')
+title('Norm. Mode Input SNR')
+h = colorbar;
+caxis([0,1])
+set(gca, 'ydir', 'normal')
+subplot(3,4,7)
+tau(StableFP == 0) = nan;
+h = imagesc(x, y, tau);
+h.AlphaData = ones(size(h.CData)); 
+h.AlphaData(isnan(h.CData)) = 0;
+set(gca, 'fontsize', 18)
+xlabel('E to I Weight')
+ylabel('E to E Weight')
+title('Mode Time Constant')
+h = colorbar;
+caxis([0,300])
+set(gca, 'ydir', 'normal')
+
+subplot(3,4,8)
+hold on
+for i=1:size(SNRmode,1)
+for j=1:size(SNRmode,2)
+if StableFP(i,j)
+    clr = hsv2rgb([1,1,min(Sharpening(i,j) / 3,1)]);
+    scatter(real(sqrt(real(SNRmode{i,j}))), taumode{i,j}, 100, 'marker', '.', 'markeredgecolor', clr, 'linewidth', 5)
+end
+end
+end
+
+set(gca, 'fontsize', 18)
+xlabel('Norm. Mode Input SNR')
+ylabel('Mode Time Constant')
+axis([0,1,0,300])
+
+colormap(gca, colorMap)
+h = colorbar
+set(h,'fontsize', 18)
+title(h,'Sharpening')
+set(h, 'ytick', [0,1])
+set(h, 'yticklabel', [{'0'}, {'3'}])
+
+
+elseif strcmp(ParameterSweep, 'NonUniformRing')
+
+x = 0.2 * ([1:22] - 1);
+y = 3 * 0.000075 * ([1:22] - 1) ; 
+
+subplot(3,4,9)
+Sharpening(StableFP == 0) = nan;
+h = imagesc(x, y, Sharpening)
+h.AlphaData = ones(size(h.CData)); 
+h.AlphaData(isnan(h.CData)) = 0;
+set(gca, 'fontsize', 18)
+xlabel('E to I Subnetwork Specificity')
+ylabel('E to I Subnetwork Weight')
+title('Recurrent Sharpening')
+set(gca, 'ydir', 'normal')
+colormap(gca, colorMap)
+h = colorbar
+caxis([0,5])
+
+subplot(3,4,10)
+SNRFrac(StableFP == 0) = nan;
+h = imagesc(x, y, SNRFrac);
+h.AlphaData = ones(size(h.CData)); 
+h.AlphaData(isnan(h.CData)) = 0;
+set(gca, 'fontsize', 18)
+xlabel('E to I Subnetwork Specificity')
+ylabel('E to I Subnetwork Weight')
+title('Norm. Mode Input SNR')
+h = colorbar;
+caxis([0,1])
+set(gca, 'ydir', 'normal')
+subplot(3,4,11)
+tau(StableFP == 0) = nan;
+h = imagesc(x, y, tau);
+h.AlphaData = ones(size(h.CData)); 
+h.AlphaData(isnan(h.CData)) = 0;
+set(gca, 'fontsize', 18)
+xlabel('E to I Subnetwork Specificity')
+ylabel('E to I Subnetwork Weight')
+title('Mode Time Constant')
+h = colorbar;
+caxis([0,300])
+set(gca, 'ydir', 'normal')
+
+
+subplot(3,4,12)
+hold on
+for i=1:size(SNRmode,1)
+for j=1:size(SNRmode,2)
+if StableFP(i,j)
+    clr = hsv2rgb([1,1,min(Sharpening(i,j) / 3,1)]);
+    scatter(real(sqrt(real(SNRmode{i,j}))), taumode{i,j}, 100, 'marker', '.', 'markeredgecolor', clr, 'linewidth', 5)
+end
+end
+end
+
+
+set(gca, 'fontsize', 18)
+xlabel('Norm. Mode Input SNR')
+ylabel('Mode Time Constant')
+axis([0,1,0,300])
+    
+colormap(gca, colorMap)
+h = colorbar
+set(h,'fontsize', 18)
+title(h,'Sharpening')
+set(h, 'ytick', [0,1])
+set(h, 'yticklabel', [{'0'}, {'3'}])
+
+end
+
+
